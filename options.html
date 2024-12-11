@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Speed Controller Settings</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            margin-bottom: 10px;
+        }
+        #status {
+            color: green;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <h2>Video Speed Settings</h2>
+    <textarea id="speedList" placeholder="Enter speeds, one per line (e.g. 0.5, 1, 1.5, 2)"></textarea>
+    <div id="status">Changes saved</div>
+    <script src="options.js"></script>
+</body>
+</html>
