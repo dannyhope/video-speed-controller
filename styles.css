@@ -1,5 +1,5 @@
 .video-speed-overlay {
-    position: fixed;
+    position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -46,9 +46,4 @@
 
 .video-speed-controls .icon {
     font-weight: bold;
-}
-
-.video-speed-controls .shortcut {
-    font-size: 0.8em;
-    opacity: 0.7;
 }

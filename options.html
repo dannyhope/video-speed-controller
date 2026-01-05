@@ -5,9 +5,75 @@
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #343F44;
+            background: #F8F9FA;
+        }
+        .container {
             max-width: 800px;
             margin: 20px auto;
             padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .status-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #00B400;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #7B858A;
+            font-size: 12px;
+        }
+        .active-speed-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        .active-speed-item .speed {
+            font-weight: bold;
+            min-width: 60px;
+        }
+        .active-speed-item button.title {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: left;
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+            font: inherit;
+            color: #0066cc;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .active-speed-item button.title:hover {
+            color: #003366;
+        }
+        .active-speed-item button.title:focus {
+            outline: 2px solid #0066cc;
+            outline-offset: 2px;
+        }
+        .active-speed-item .time {
+            color: #666;
+            font-size: 0.9em;
         }
         .section {
             margin-bottom: 30px;
@@ -46,55 +112,106 @@
     </style>
 </head>
 <body>
-    <h2>Video Speed Controller Settings</h2>
+    <div class="container">
+        <h2>Video Speed Controller Settings</h2>
+        <div id="status" class="status-message" role="status" aria-live="polite"></div>
     
+
     <div class="section">
-        <h3>Speed Presets</h3>
-        <textarea id="speedList" placeholder="Enter speeds, one per line (e.g. 0.5, 1, 1.5, 2)"></textarea>
-        <div class="hint">These speeds will be available when using speed up/down shortcuts</div>
+        <h3>Speeds</h3>
+        <p>Enter one speed value per line. Values should be between 0.05 and 16.</p>
+        <textarea 
+            id="speedList" 
+            aria-label="Speed presets, one per line" 
+            tabindex="1"
+            style="width: 200px; height: 350px; font-family: monospace; resize: vertical;"
+            placeholder="Enter speed values between 0.05 and 16"
+            spellcheck="false"
+        ></textarea>
+        <button 
+            id="resetSpeeds" 
+            style="
+                margin-top: 10px;
+                display: none;
+                background: none;
+                border: none;
+                color: #666;
+                text-decoration: underline;
+                font-size: 12px;
+                padding: 0;
+                cursor: pointer;
+            " 
+            title="Restore the default list of speed presets" 
+            tabindex="2"
+        >Reset to default speeds</button>
     </div>
 
     <div class="section">
         <h3>Keyboard Shortcuts</h3>
         <div class="shortcut-row">
-            <span class="shortcut-label">Speed Up:</span>
-            <input type="text" class="shortcut-input" id="shortcutSpeedUp" placeholder="e.g. d">
+            <span class="shortcut-label">Speed up</span>
+            <input 
+                type="text" 
+                class="shortcut-input" 
+                id="shortcutSpeedUp" 
+                aria-label="Speed up shortcut key" 
+                title="Press the key you want to use for speeding up video playback" 
+                tabindex="3"
+                maxlength="1"
+                spellcheck="false"
+                autocomplete="off"
+            >
         </div>
         <div class="shortcut-row">
-            <span class="shortcut-label">Speed Down:</span>
-            <input type="text" class="shortcut-input" id="shortcutSpeedDown" placeholder="e.g. s">
+            <span class="shortcut-label">Slow down</span>
+            <input 
+                type="text" 
+                class="shortcut-input" 
+                id="shortcutSpeedDown" 
+                aria-label="Slow down shortcut key" 
+                title="Press the key you want to use for slowing down video playback" 
+                tabindex="4"
+                maxlength="1"
+                spellcheck="false"
+                autocomplete="off"
+            >
         </div>
         <div class="shortcut-row">
-            <span class="shortcut-label">Reset to Normal (1x):</span>
-            <input type="text" class="shortcut-input" id="shortcutReset" placeholder="e.g. r">
+            <span class="shortcut-label">Reset to normal</span>
+            <input 
+                type="text" 
+                class="shortcut-input" 
+                id="shortcutReset" 
+                aria-label="Reset speed shortcut key" 
+                title="Press the key you want to use for resetting video to normal speed" 
+                tabindex="5"
+                maxlength="1"
+                spellcheck="false"
+                autocomplete="off"
+            >
         </div>
-        <div class="checkbox-row">
-            <label>
-                <input type="checkbox" id="enableNumberShortcuts">
-                Enable number keys (1-9) to jump directly to speeds
-            </label>
-            <div class="hint">Numbers 1-9 will map to your speed presets in order</div>
         </div>
+
     </div>
 
-    <div class="section">
-        <h3>Interface Options</h3>
-        <div class="checkbox-row">
-            <label>
-                <input type="checkbox" id="showSpeedButtons">
-                Show speed-up/slow-down buttons
-            </label>
-        </div>
-        <div class="checkbox-row">
-            <label>
-                <input type="checkbox" id="showShortcutHints">
-                Show keyboard shortcuts on buttons
-            </label>
-        </div>
     </div>
-
-    <div id="status">Changes saved</div>
-    <div id="version" style="margin-top: 20px; color: #666; font-size: 12px;"></div>
+    <footer>
+        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 800px; margin: 0 auto; padding: 0 20px;">
+            <a 
+                href="https://github.com/dannyhope/video-speed-controller/issues/new"
+                id="submit-feedback" 
+                title="Submit feedback or report an issue on GitHub"
+                style="color: #7B858A; text-decoration: underline;"
+                tabindex="9"
+                target="_blank"
+            >Submit feedback</a>
+            <div id="version" style="color: #7B858A;"></div>
+            <div id="build-info" style="color: #7B858A;">
+                Last built on Tuesday the 4th of February, 2025 at 1:03PM
+            </div>
+        </div>
+    </footer>
     <script src="options.js"></script>
+    
 </body>
 </html>
