@@ -1,0 +1,590 @@
+// Debug logging wrapper
+function debug(...args) {
+    console.log('[VSC Popup]', ...args);
+}
+
+// Validation utilities (copied inline from options.js)
+function validateSpeed(speed) {
+    const parsed = parseFloat(speed);
+    if (isNaN(parsed)) return { valid: false, error: 'Invalid number' };
+    if (parsed < 0.05) return { valid: false, error: 'Speed must be at least 0.05x' };
+    if (parsed > 16) return { valid: false, error: 'Speed must be at most 16x' };
+    return { valid: true, value: parsed };
+}
+
+function validateSpeedArray(speeds) {
+    if (!Array.isArray(speeds)) return { valid: false, error: 'Must be an array' };
+
+    const validatedSpeeds = [];
+    const errors = [];
+
+    for (let i = 0; i < speeds.length; i++) {
+        const result = validateSpeed(speeds[i]);
+        if (result.valid) {
+            validatedSpeeds.push(result.value);
+        } else {
+            errors.push(`Item ${i + 1}: ${result.error}`);
+        }
+    }
+
+    // Remove duplicates and sort
+    const uniqueSpeeds = [...new Set(validatedSpeeds)].sort((a, b) => a - b);
+
+    // Enforce minimum 3 speeds
+    if (uniqueSpeeds.length < 3) {
+        return { valid: false, error: 'At least 3 speeds required', value: uniqueSpeeds };
+    }
+
+    return {
+        valid: errors.length === 0,
+        value: uniqueSpeeds,
+        errors
+    };
+}
+
+function validateShortcut(key) {
+    if (typeof key !== 'string') return { valid: false, error: 'Must be a string' };
+
+    const sanitized = key.trim().toLowerCase();
+    if (sanitized.length === 0) return { valid: false, error: 'Cannot be empty' };
+    if (sanitized.length > 1) return { valid: false, error: 'Must be a single character' };
+
+    // Disallowed keys
+    const disallowedKeys = ['control', 'alt', 'shift', 'meta', 'tab', 'escape', 'enter', 'backspace', 'delete'];
+    if (disallowedKeys.includes(sanitized)) {
+        return { valid: false, error: 'Control keys not allowed' };
+    }
+
+    return { valid: true, value: sanitized };
+}
+
+function validateShortcuts(shortcuts) {
+    if (typeof shortcuts !== 'object' || shortcuts === null) {
+        return { valid: false, error: 'Must be an object' };
+    }
+
+    const validatedShortcuts = {};
+    const errors = [];
+
+    const requiredKeys = ['speedUp', 'speedDown', 'reset'];
+
+    for (const key of requiredKeys) {
+        if (!(key in shortcuts)) {
+            errors.push(`Missing required key: ${key}`);
+            continue;
+        }
+
+        const result = validateShortcut(shortcuts[key]);
+        if (result.valid) {
+            validatedShortcuts[key] = result.value;
+        } else {
+            errors.push(`${key}: ${result.error}`);
+        }
+    }
+
+    // Check for duplicates
+    const values = Object.values(validatedShortcuts);
+    if (values.length !== new Set(values).size) {
+        errors.push('All shortcuts must be unique');
+    }
+
+    return {
+        valid: errors.length === 0,
+        value: validatedShortcuts,
+        errors
+    };
+}
+
+// Utility function for debouncing
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Resilient storage utilities (copied inline from options.js)
+async function safeStorageGet(keys, defaults = {}) {
+    try {
+        let lastError;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                const result = await chrome.storage.sync.get(keys || defaults);
+                return { success: true, result, attempts: attempt };
+            } catch (error) {
+                lastError = error;
+                if (attempt < 3) {
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                }
+            }
+        }
+        return { success: false, error: lastError, attempts: 3 };
+    } catch (error) {
+        return { success: false, error, attempts: 0 };
+    }
+}
+
+async function safeStorageSet(items) {
+    try {
+        // Check quota first (simplified check)
+        const dataSize = JSON.stringify(items).length;
+        if (dataSize > 100000) { // 100KB limit
+            throw new Error('Data too large for storage');
+        }
+
+        let lastError;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                await chrome.storage.sync.set(items);
+                return { success: true, result: items, attempts: attempt };
+            } catch (error) {
+                lastError = error;
+                if (attempt < 3 && !error.message.includes('quota')) {
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                } else {
+                    break; // Don't retry quota errors
+                }
+            }
+        }
+        return { success: false, error: lastError, attempts: 3 };
+    } catch (error) {
+        return { success: false, error, attempts: 0 };
+    }
+}
+
+// Default settings
+const defaultSpeeds = [0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4, 6, 10, 16];
+
+const defaultSettings = {
+    customSpeeds: defaultSpeeds,
+    shortcuts: {
+        speedUp: 'd',
+        speedDown: 'a',
+        reset: 's'
+    }
+};
+
+// Current settings state
+let currentSettings = { ...defaultSettings };
+let editingSpeedIndex = null;
+
+// DOM elements
+let elements = {};
+
+// Load settings from storage
+async function loadSettings() {
+    try {
+        debug('Loading settings...');
+
+        const storageResult = await safeStorageGet(null, defaultSettings);
+        if (!storageResult.success) {
+            throw new Error(storageResult.error?.message || 'Failed to load settings');
+        }
+
+        const result = storageResult.result;
+        debug('Raw storage result:', result);
+
+        // Start with default settings
+        currentSettings = { ...defaultSettings };
+
+        // If we have stored settings, update the defaults
+        if (result && Object.keys(result).length > 0) {
+            if (Array.isArray(result.customSpeeds)) {
+                currentSettings.customSpeeds = result.customSpeeds;
+            }
+
+            if (result.shortcuts) {
+                currentSettings.shortcuts = {
+                    ...defaultSettings.shortcuts,
+                    ...result.shortcuts
+                };
+            }
+        }
+
+        debug('Final settings:', currentSettings);
+        return currentSettings;
+    } catch (error) {
+        console.error('Error loading settings:', error);
+        debug('Using fallback default settings');
+        return defaultSettings;
+    }
+}
+
+// Save settings to storage
+async function saveSettings(settings) {
+    try {
+        debug('Saving settings:', settings);
+
+        const storageResult = await safeStorageSet(settings);
+        if (!storageResult.success) {
+            throw new Error(storageResult.error?.message || 'Failed to save settings');
+        }
+
+        currentSettings = { ...settings };
+        debug('Settings saved successfully');
+        showStatus('Saved');
+        return true;
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        debug('Failed to save settings');
+        showStatus('Error saving');
+        return false;
+    }
+}
+
+// Show status message
+function showStatus(message) {
+    if (!elements.status) return;
+    debug('Showing status:', message);
+    elements.status.textContent = message;
+    elements.status.classList.add('show');
+    setTimeout(() => {
+        elements.status.classList.remove('show');
+    }, 1500);
+}
+
+// Render speed pills
+function renderSpeeds() {
+    if (!elements.speedList) return;
+
+    debug('Rendering speeds:', currentSettings.customSpeeds);
+
+    // Clear existing pills
+    elements.speedList.innerHTML = '';
+
+    // Create a pill for each speed
+    currentSettings.customSpeeds.forEach((speed, index) => {
+        const pill = document.createElement('div');
+        pill.className = 'speed-pill';
+        pill.setAttribute('role', 'listitem');
+
+        // Create speed value element
+        const valueEl = document.createElement('span');
+        valueEl.className = 'speed-value';
+        valueEl.textContent = `${speed}×`;
+        valueEl.setAttribute('data-index', index);
+
+        // Click to edit
+        valueEl.addEventListener('click', () => startEditingSpeed(index));
+
+        // Create remove button
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-speed';
+        removeBtn.innerHTML = '×';
+        removeBtn.setAttribute('aria-label', `Remove ${speed}× speed`);
+        removeBtn.setAttribute('data-index', index);
+
+        // Click to remove
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeSpeed(index);
+        });
+
+        pill.appendChild(valueEl);
+        pill.appendChild(removeBtn);
+        elements.speedList.appendChild(pill);
+    });
+}
+
+// Start editing a speed
+function startEditingSpeed(index) {
+    if (editingSpeedIndex !== null) {
+        cancelEditingSpeed();
+    }
+
+    editingSpeedIndex = index;
+    const pill = elements.speedList.children[index];
+    pill.classList.add('editing');
+
+    const valueEl = pill.querySelector('.speed-value');
+    const currentValue = currentSettings.customSpeeds[index];
+
+    // Replace span with input
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0.05';
+    input.max = '16';
+    input.step = '0.05';
+    input.value = currentValue;
+
+    // Replace the span
+    valueEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    // Handle editing
+    const finishEdit = () => {
+        const newValue = parseFloat(input.value);
+        const validation = validateSpeed(newValue);
+
+        if (!validation.valid) {
+            showStatus(validation.error);
+            cancelEditingSpeed();
+            return;
+        }
+
+        // Update the speed
+        const newSpeeds = [...currentSettings.customSpeeds];
+        newSpeeds[index] = validation.value;
+
+        // Validate and save
+        const arrayValidation = validateSpeedArray(newSpeeds);
+        if (!arrayValidation.valid) {
+            showStatus(arrayValidation.error || 'Invalid speeds');
+            cancelEditingSpeed();
+            return;
+        }
+
+        const newSettings = { ...currentSettings, customSpeeds: arrayValidation.value };
+        currentSettings = newSettings;
+        editingSpeedIndex = null;
+        renderSpeeds();
+        debouncedSave(newSettings);
+    };
+
+    const cancelEdit = () => {
+        cancelEditingSpeed();
+    };
+
+    input.addEventListener('blur', finishEdit);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            finishEdit();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelEdit();
+        }
+    });
+}
+
+// Cancel editing a speed
+function cancelEditingSpeed() {
+    editingSpeedIndex = null;
+    renderSpeeds();
+}
+
+// Remove a speed
+function removeSpeed(index) {
+    const newSpeeds = currentSettings.customSpeeds.filter((_, i) => i !== index);
+
+    // Validate (must have at least 3)
+    const validation = validateSpeedArray(newSpeeds);
+    if (!validation.valid) {
+        showStatus(validation.error || 'At least 3 speeds required');
+        return;
+    }
+
+    const newSettings = { ...currentSettings, customSpeeds: validation.value };
+    currentSettings = newSettings;
+    renderSpeeds();
+    debouncedSave(newSettings);
+}
+
+// Add a new speed
+function addSpeed() {
+    const input = elements.newSpeedInput;
+    const value = parseFloat(input.value);
+
+    // Validate the input
+    const validation = validateSpeed(value);
+    if (!validation.valid) {
+        input.classList.add('error');
+        showStatus(validation.error);
+        setTimeout(() => input.classList.remove('error'), 2000);
+        return;
+    }
+
+    // Add to speeds array
+    const newSpeeds = [...currentSettings.customSpeeds, validation.value];
+
+    // Validate and deduplicate
+    const arrayValidation = validateSpeedArray(newSpeeds);
+    if (!arrayValidation.valid) {
+        input.classList.add('error');
+        showStatus(arrayValidation.error || 'Invalid speeds');
+        setTimeout(() => input.classList.remove('error'), 2000);
+        return;
+    }
+
+    const newSettings = { ...currentSettings, customSpeeds: arrayValidation.value };
+    currentSettings = newSettings;
+    input.value = '';
+    renderSpeeds();
+    debouncedSave(newSettings);
+}
+
+// Update shortcuts in UI
+function updateShortcutsUI() {
+    if (elements.shortcutSpeedUp) {
+        elements.shortcutSpeedUp.value = currentSettings.shortcuts.speedUp;
+    }
+    if (elements.shortcutSpeedDown) {
+        elements.shortcutSpeedDown.value = currentSettings.shortcuts.speedDown;
+    }
+    if (elements.shortcutReset) {
+        elements.shortcutReset.value = currentSettings.shortcuts.reset;
+    }
+}
+
+// Handle shortcut keydown
+function handleShortcutKeydown(e) {
+    e.preventDefault();
+
+    const inputId = e.target.id;
+    const shortcutKey = inputId.replace('shortcut', '');
+    const shortcutName = shortcutKey.charAt(0).toLowerCase() + shortcutKey.slice(1);
+    const value = e.key.toLowerCase();
+
+    // Ignore modifier keys
+    if (['control', 'alt', 'shift', 'meta', 'tab', 'escape'].includes(value)) {
+        return;
+    }
+
+    // Validate shortcut
+    const validation = validateShortcut(value);
+    if (!validation.valid) {
+        e.target.classList.add('error');
+        showStatus(validation.error);
+        setTimeout(() => e.target.classList.remove('error'), 2000);
+        return;
+    }
+
+    // Check for conflicts
+    const newShortcuts = { ...currentSettings.shortcuts, [shortcutName]: validation.value };
+    const shortcutValidation = validateShortcuts(newShortcuts);
+    if (!shortcutValidation.valid) {
+        e.target.classList.add('error');
+        showStatus(shortcutValidation.errors.join(', '));
+        setTimeout(() => e.target.classList.remove('error'), 2000);
+        return;
+    }
+
+    // Update settings
+    const newSettings = { ...currentSettings, shortcuts: shortcutValidation.value };
+    currentSettings = newSettings;
+    updateShortcutsUI();
+    debouncedSave(newSettings);
+}
+
+// Handle shortcut input (typing/pasting)
+function handleShortcutInput(e) {
+    const inputId = e.target.id;
+    const shortcutKey = inputId.replace('shortcut', '');
+    const shortcutName = shortcutKey.charAt(0).toLowerCase() + shortcutKey.slice(1);
+    const value = e.target.value.trim().toLowerCase();
+
+    if (value.length === 0) return;
+
+    // Validate shortcut
+    const validation = validateShortcut(value);
+    if (!validation.valid) {
+        e.target.classList.add('error');
+        showStatus(validation.error);
+        setTimeout(() => e.target.classList.remove('error'), 2000);
+        return;
+    }
+
+    // Check for conflicts
+    const newShortcuts = { ...currentSettings.shortcuts, [shortcutName]: validation.value };
+    const shortcutValidation = validateShortcuts(newShortcuts);
+    if (!shortcutValidation.valid) {
+        e.target.classList.add('error');
+        showStatus(shortcutValidation.errors.join(', '));
+        setTimeout(() => e.target.classList.remove('error'), 2000);
+        return;
+    }
+
+    // Update settings
+    const newSettings = { ...currentSettings, shortcuts: shortcutValidation.value };
+    currentSettings = newSettings;
+    updateShortcutsUI();
+    debouncedSave(newSettings);
+}
+
+// Debounced save function
+const debouncedSave = debounce(async (settings) => {
+    await saveSettings(settings);
+}, 250);
+
+// Listen for storage changes from other sources
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'sync') {
+        debug('Storage changed:', changes);
+
+        // Reload settings if they changed elsewhere
+        if (changes.customSpeeds || changes.shortcuts) {
+            loadSettings().then((settings) => {
+                currentSettings = settings;
+                renderSpeeds();
+                updateShortcutsUI();
+            });
+        }
+    }
+});
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        debug('Popup loaded');
+
+        // Get DOM elements
+        elements = {
+            status: document.getElementById('status'),
+            speedList: document.getElementById('speedList'),
+            newSpeedInput: document.getElementById('newSpeedInput'),
+            addSpeedBtn: document.getElementById('addSpeedBtn'),
+            shortcutSpeedUp: document.getElementById('shortcutSpeedUp'),
+            shortcutSpeedDown: document.getElementById('shortcutSpeedDown'),
+            shortcutReset: document.getElementById('shortcutReset')
+        };
+
+        // Load settings
+        const settings = await loadSettings();
+        currentSettings = settings;
+
+        // Render UI
+        renderSpeeds();
+        updateShortcutsUI();
+
+        // Add event listeners
+
+        // Add speed button
+        if (elements.addSpeedBtn) {
+            elements.addSpeedBtn.addEventListener('click', addSpeed);
+        }
+
+        // Add speed on Enter key
+        if (elements.newSpeedInput) {
+            elements.newSpeedInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addSpeed();
+                }
+            });
+        }
+
+        // Shortcut inputs
+        if (elements.shortcutSpeedUp) {
+            elements.shortcutSpeedUp.addEventListener('keydown', handleShortcutKeydown);
+            elements.shortcutSpeedUp.addEventListener('input', handleShortcutInput);
+        }
+        if (elements.shortcutSpeedDown) {
+            elements.shortcutSpeedDown.addEventListener('keydown', handleShortcutKeydown);
+            elements.shortcutSpeedDown.addEventListener('input', handleShortcutInput);
+        }
+        if (elements.shortcutReset) {
+            elements.shortcutReset.addEventListener('keydown', handleShortcutKeydown);
+            elements.shortcutReset.addEventListener('input', handleShortcutInput);
+        }
+
+        debug('Popup initialized successfully');
+    } catch (error) {
+        console.error('Error initializing popup:', error);
+    }
+});

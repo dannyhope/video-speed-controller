@@ -1,0 +1,272 @@
+/* Video Speed Controller Popup Styles */
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #343F44;
+    background: #F8F9FA;
+    width: 380px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.popup-container {
+    padding: 16px;
+    background: white;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #E1E4E6;
+}
+
+h1 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: #343F44;
+}
+
+.status-indicator {
+    font-size: 12px;
+    color: #00B400;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.status-indicator.show {
+    opacity: 1;
+}
+
+/* Sections */
+.section {
+    margin-bottom: 24px;
+}
+
+h2 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: #343F44;
+}
+
+.hint {
+    color: #7B858A;
+    font-size: 11px;
+    margin: 8px 0 0 0;
+}
+
+/* Speed Pills */
+.speed-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+    min-height: 32px;
+}
+
+.speed-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #F0F2F4;
+    border: 1px solid #D1D5D8;
+    border-radius: 4px;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.speed-pill:hover {
+    background: #E5E8EB;
+    border-color: #B8BFC4;
+}
+
+.speed-pill.editing {
+    background: #E3F2FD;
+    border-color: #0066cc;
+}
+
+.speed-value {
+    cursor: pointer;
+    user-select: none;
+    min-width: 40px;
+    text-align: center;
+}
+
+.speed-value:hover {
+    color: #0066cc;
+}
+
+.speed-pill input {
+    width: 50px;
+    padding: 2px 4px;
+    border: 1px solid #0066cc;
+    border-radius: 2px;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.remove-speed {
+    background: none;
+    border: none;
+    color: #7B858A;
+    cursor: pointer;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.remove-speed:hover {
+    color: #D32F2F;
+}
+
+.remove-speed:focus {
+    outline: 2px solid #0066cc;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Add Speed */
+.add-speed-container {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.speed-input {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #D1D5D8;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.speed-input:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+.speed-input.error {
+    border-color: #D32F2F;
+    background: #FFEBEE;
+}
+
+.add-btn {
+    padding: 6px 12px;
+    background: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    min-width: 36px;
+}
+
+.add-btn:hover {
+    background: #0052a3;
+}
+
+.add-btn:active {
+    background: #003d7a;
+}
+
+.add-btn:focus {
+    outline: 2px solid #0066cc;
+    outline-offset: 2px;
+}
+
+/* Keyboard Shortcuts */
+.shortcut-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.shortcut-row label {
+    font-size: 13px;
+    color: #343F44;
+}
+
+.shortcut-input {
+    width: 60px;
+    padding: 6px 8px;
+    border: 1px solid #D1D5D8;
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: center;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+    text-transform: lowercase;
+}
+
+.shortcut-input:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+.shortcut-input.error {
+    border-color: #D32F2F;
+    background: #FFEBEE;
+}
+
+/* Footer */
+footer {
+    margin-top: 20px;
+    padding-top: 12px;
+    border-top: 1px solid #E1E4E6;
+    text-align: center;
+}
+
+.advanced-link {
+    color: #0066cc;
+    text-decoration: none;
+    font-size: 12px;
+    transition: color 0.2s ease;
+}
+
+.advanced-link:hover {
+    color: #003366;
+    text-decoration: underline;
+}
+
+.advanced-link:focus {
+    outline: 2px solid #0066cc;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Scrollbar styling */
+body::-webkit-scrollbar {
+    width: 8px;
+}
+
+body::-webkit-scrollbar-track {
+    background: #F8F9FA;
+}
+
+body::-webkit-scrollbar-thumb {
+    background: #D1D5D8;
+    border-radius: 4px;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+    background: #B8BFC4;
+}

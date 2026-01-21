@@ -1,13 +1,20 @@
 class VideoSpeedController {
     constructor() {
-        this.defaultSpeeds = [0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 4, 8, 16];
+        this.defaultSpeeds = [0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4, 6, 10, 16];
         this.speeds = [...this.defaultSpeeds];
         this.currentSpeedIndex = this.speeds.indexOf(1);
         this.previousSpeedIndex = null;
+        this.lastSpeedIndex = this.currentSpeedIndex; // Track last speed for toggle
         this.longPressTimer = null;
         this.settings = null;
         this.overlay = this.createOverlay();
         this.controls = this.createControls();
+        this.currentVideo = null;
+        this.controlsTimeout = null;
+        this.isMouseOverVideo = false;
+        this.isLongPressing = false;
+        this.speedBeforeLongPress = null;
+        this.longPressStartTime = null;
 
         // Track cleanup resources
         this.timeouts = [];
@@ -389,15 +396,222 @@ class VideoSpeedController {
             };
 
             const playingVideo = getPlayingVideo();
+            this.currentVideo = playingVideo;
 
-            // Show controls only if there's a playing video
+            // Position controls inside the video if there's a playing video
             if (playingVideo) {
-                this.controls.style.display = 'flex';
+                this.positionControlsInsideVideo(playingVideo);
+                this.setupVideoMouseListeners(playingVideo);
+                // Start with controls hidden, they'll show on mouse movement
+                this.hideControls();
             } else {
                 this.controls.style.display = 'none';
+                this.currentVideo = null;
             }
         } catch (error) {
             console.error('Error updating controls visibility based on video:', error);
+        }
+    }
+
+    positionControlsInsideVideo(video) {
+        try {
+            if (!video || !this.controls) return;
+            
+            const videoRect = video.getBoundingClientRect();
+            
+            // Position controls in top-left corner of the video, with some padding
+            const padding = 10;
+            this.controls.style.position = 'fixed';
+            this.controls.style.top = `${videoRect.top + padding}px`;
+            this.controls.style.left = `${videoRect.left + padding}px`;
+            this.controls.style.display = 'flex';
+        } catch (error) {
+            console.error('Error positioning controls inside video:', error);
+        }
+    }
+
+    setupVideoMouseListeners(video) {
+        try {
+            if (!video || video._vscMouseListenersAdded) return;
+
+            const mouseEnterHandler = () => {
+                this.isMouseOverVideo = true;
+                this.showControls();
+            };
+
+            const mouseLeaveHandler = () => {
+                this.isMouseOverVideo = false;
+                this.hideControls();
+            };
+
+            const mouseMoveHandler = () => {
+                if (this.isMouseOverVideo) {
+                    this.showControls();
+                }
+            };
+
+            video.addEventListener('mouseenter', mouseEnterHandler);
+            video.addEventListener('mouseleave', mouseLeaveHandler);
+            video.addEventListener('mousemove', mouseMoveHandler);
+
+            video._vscMouseListenersAdded = true;
+            
+            // Store listeners for cleanup
+            this.eventListeners.push(
+                { element: video, event: 'mouseenter', handler: mouseEnterHandler },
+                { element: video, event: 'mouseleave', handler: mouseLeaveHandler },
+                { element: video, event: 'mousemove', handler: mouseMoveHandler }
+            );
+        } catch (error) {
+            console.error('Error setting up video mouse listeners:', error);
+        }
+    }
+
+    showControls() {
+        try {
+            if (!this.controls || !this.currentVideo) return;
+            
+            // Clear any existing hide timeout
+            if (this.controlsTimeout) {
+                clearTimeout(this.controlsTimeout);
+                this.controlsTimeout = null;
+            }
+            
+            // Show controls
+            this.controls.style.opacity = '1';
+            this.controls.style.display = 'flex';
+            
+            // Set timeout to hide controls after 2 seconds
+            this.controlsTimeout = setTimeout(() => {
+                this.hideControls();
+            }, 2000);
+            
+            // Track timeout for cleanup
+            this.timeouts.push(this.controlsTimeout);
+        } catch (error) {
+            console.error('Error showing controls:', error);
+        }
+    }
+
+    hideControls() {
+        try {
+            if (!this.controls) return;
+            
+            // Clear any existing timeout
+            if (this.controlsTimeout) {
+                clearTimeout(this.controlsTimeout);
+                this.controlsTimeout = null;
+            }
+            
+            // Hide controls with fade
+            this.controls.style.opacity = '0';
+            
+            // Hide completely after fade animation
+            setTimeout(() => {
+                if (this.controls && !this.isMouseOverVideo) {
+                    this.controls.style.display = 'none';
+                }
+            }, 300);
+        } catch (error) {
+            console.error('Error hiding controls:', error);
+        }
+    }
+
+    startLongPress(video) {
+        try {
+            if (!video || this.isLongPressing) return;
+            
+            this.isLongPressing = true;
+            this.speedBeforeLongPress = video.playbackRate;
+            this.longPressStartTime = Date.now();
+            
+            // Start timer to detect long press (after 300ms)
+            this.longPressTimer = setTimeout(() => {
+                if (this.isLongPressing) {
+                    this.toggleNormalSpeed(video);
+                }
+            }, 300);
+            
+            // Track timeout for cleanup
+            this.timeouts.push(this.longPressTimer);
+        } catch (error) {
+            console.error('Error starting long press:', error);
+        }
+    }
+
+    endLongPress(video) {
+        try {
+            if (!video || !this.isLongPressing) return;
+            
+            // Clear long press timer
+            if (this.longPressTimer) {
+                clearTimeout(this.longPressTimer);
+                this.longPressTimer = null;
+            }
+            
+            const pressDuration = Date.now() - this.longPressStartTime;
+            
+            if (pressDuration >= 300) {
+                // This was a long press, restore original speed
+                video.playbackRate = this.speedBeforeLongPress;
+                this.showSpeedIndicator(this.speedBeforeLongPress);
+                
+                // Update current speed index to match restored speed
+                const restoredIndex = this.speeds.indexOf(this.speedBeforeLongPress);
+                if (restoredIndex !== -1) {
+                    this.currentSpeedIndex = restoredIndex;
+                }
+            } else {
+                // This was a short press, treat as normal toggle
+                this.resetSpeed(video);
+            }
+            
+            // Reset long press state
+            this.isLongPressing = false;
+            this.speedBeforeLongPress = null;
+            this.longPressStartTime = null;
+        } catch (error) {
+            console.error('Error ending long press:', error);
+        }
+    }
+
+    toggleNormalSpeed(video) {
+        try {
+            if (!video) return;
+            
+            const currentSpeed = video.playbackRate;
+            let targetSpeed;
+            
+            if (currentSpeed === 1) {
+                // Currently at normal speed, go to last non-1x speed
+                if (this.lastSpeedIndex !== undefined && this.lastSpeedIndex !== this.speeds.indexOf(1)) {
+                    targetSpeed = this.speeds[this.lastSpeedIndex];
+                } else {
+                    // No valid last speed, find the closest speed > 1
+                    const speedsAboveNormal = this.speeds.filter(s => s > 1);
+                    targetSpeed = speedsAboveNormal.length > 0 ? speedsAboveNormal[0] : 1.5;
+                }
+            } else {
+                // Currently not at normal speed, go to normal speed
+                targetSpeed = 1;
+            }
+            
+            // Apply target speed
+            video.playbackRate = targetSpeed;
+            this.showSpeedIndicator(targetSpeed);
+            
+            // Update current speed index
+            const targetIndex = this.speeds.indexOf(targetSpeed);
+            if (targetIndex !== -1) {
+                this.currentSpeedIndex = targetIndex;
+            }
+            
+            // Track last speed if we're moving away from non-1x speed
+            if (currentSpeed !== 1 && targetSpeed === 1) {
+                this.lastSpeedIndex = this.speeds.indexOf(currentSpeed);
+            }
+        } catch (error) {
+            console.error('Error toggling normal speed:', error);
         }
     }
 
@@ -469,23 +683,49 @@ class VideoSpeedController {
                     if (!video) return;
 
                     const key = e.key.toLowerCase();
+                    let actionTaken = false;
                     
                     if (key === this.settings.shortcuts.speedUp) {
                         this.changeSpeed(video, 1);
+                        actionTaken = true;
                     } else if (key === this.settings.shortcuts.speedDown) {
                         this.changeSpeed(video, -1);
+                        actionTaken = true;
                     } else if (key === this.settings.shortcuts.reset) {
-                        this.resetSpeed(video);
-                    } else if (this.settings.enableNumberShortcuts && /^[1-9]$/.test(key)) {
-                        this.jumpToSpeed(video, parseInt(key) - 1);
+                        // Handle long press for speed inversion
+                        if (!this.isLongPressing) {
+                            this.startLongPress(video);
+                        }
+                        actionTaken = true;
+                    }
+                    
+                    // Show controls when any speed shortcut is used
+                    if (actionTaken && this.currentVideo) {
+                        this.showControls();
                     }
                 } catch (keyHandlerError) {
                     console.error('Error in keydown handler:', keyHandlerError);
                 }
             };
             
+            // Keyup handler to detect long press release
+            const keyupHandler = (e) => {
+                try {
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+                    const key = e.key.toLowerCase();
+                    
+                    if (key === this.settings.shortcuts.reset && this.isLongPressing) {
+                        this.endLongPress(getCurrentVideo());
+                    }
+                } catch (keyUpError) {
+                    console.error('Error in keyup handler:', keyUpError);
+                }
+            };
+            
             // Add keydown listener safely
             addSafeListener(document, 'keydown', keydownHandler);
+            addSafeListener(document, 'keyup', keyupHandler);
 
             // Button click handlers with defensive queries
             const getButton = (selector) => {
@@ -568,7 +808,24 @@ class VideoSpeedController {
             }
             
             const oldIndex = this.currentSpeedIndex;
-            this.currentSpeedIndex = this.speeds.indexOf(1);
+            const normalSpeedIndex = this.speeds.indexOf(1);
+            
+            // Toggle logic: if currently at normal speed, go to last speed; otherwise go to normal speed
+            if (this.currentSpeedIndex === normalSpeedIndex) {
+                // Currently at normal speed, go to last speed
+                if (this.lastSpeedIndex !== undefined && this.lastSpeedIndex !== normalSpeedIndex) {
+                    this.currentSpeedIndex = this.lastSpeedIndex;
+                } else {
+                    // No valid last speed, stay at normal speed
+                    this.currentSpeedIndex = normalSpeedIndex;
+                }
+            } else {
+                // Currently not at normal speed, go to normal speed and remember current speed
+                this.lastSpeedIndex = this.currentSpeedIndex;
+                this.currentSpeedIndex = normalSpeedIndex;
+            }
+            
+            const newSpeed = this.speeds[this.currentSpeedIndex];
             
             // Validate state before applying
             const stateValidation = this.validateCurrentState();
@@ -576,64 +833,31 @@ class VideoSpeedController {
                 console.warn('State validation failed before speed reset:', stateValidation.errors);
             }
             
-            video.playbackRate = 1;
-            this.showSpeedIndicator(1);
-            
-            // Record state change
-            this.recordCurrentState('speed_reset');
-            
-            // Remove this video from active speeds
-            const videoUrl = video.src || window.location.href;
-            try {
-                chrome.storage.local.get({ activeSpeeds: {} }, (result) => {
-                    try {
-                        const activeSpeeds = result.activeSpeeds;
-                        delete activeSpeeds[videoUrl];
-                        chrome.storage.local.set({ activeSpeeds });
-                    } catch (storageError) {
-                        console.error('Error updating active speeds:', storageError);
-                    }
-                });
-            } catch (storageError) {
-                console.error('Error accessing storage:', storageError);
-            }
-        } catch (error) {
-            console.error('Error in resetSpeed:', error);
-        }
-    };
-
-    jumpToSpeed(video, index) {
-        try {
-            if (!video) {
-                console.error('No video element provided to jumpToSpeed');
-                return;
-            }
-            
-            // Validate index before applying
-            if (index < 0 || index >= this.speeds.length) {
-                console.warn(`Invalid speed index: ${index}, valid range: 0-${this.speeds.length - 1}`);
-                return;
-            }
-            
-            const oldIndex = this.currentSpeedIndex;
-            this.currentSpeedIndex = index;
-            const newSpeed = this.speeds[this.currentSpeedIndex];
-            
-            // Validate state consistency
-            const stateValidation = this.validateCurrentState();
-            if (!stateValidation.valid) {
-                console.warn('State validation failed before speed jump:', stateValidation.errors);
-                return;
-            }
-            
             video.playbackRate = newSpeed;
             this.showSpeedIndicator(newSpeed);
             
             // Record state change
-            this.recordCurrentState('speed_jump');
+            this.recordCurrentState('speed_toggle');
             
+            // Remove this video from active speeds only if resetting to normal speed
+            if (this.currentSpeedIndex === normalSpeedIndex) {
+                const videoUrl = video.src || window.location.href;
+                try {
+                    chrome.storage.local.get({ activeSpeeds: {} }, (result) => {
+                        try {
+                            const activeSpeeds = result.activeSpeeds;
+                            delete activeSpeeds[videoUrl];
+                            chrome.storage.local.set({ activeSpeeds });
+                        } catch (storageError) {
+                            console.error('Error updating active speeds:', storageError);
+                        }
+                    });
+                } catch (storageError) {
+                    console.error('Error accessing storage:', storageError);
+                }
+            }
         } catch (error) {
-            console.error('Error in jumpToSpeed:', error);
+            console.error('Error in resetSpeed:', error);
         }
     };
 
@@ -647,6 +871,11 @@ class VideoSpeedController {
             const oldIndex = this.currentSpeedIndex;
             this.currentSpeedIndex = Math.max(0, Math.min(this.speeds.length - 1, this.currentSpeedIndex + direction));
             const newSpeed = this.speeds[this.currentSpeedIndex];
+            
+            // Track last speed (only if not normal speed)
+            if (newSpeed !== 1) {
+                this.lastSpeedIndex = this.currentSpeedIndex;
+            }
             
             // Validate state before applying
             const stateValidation = this.validateCurrentState();
@@ -758,6 +987,10 @@ class VideoSpeedController {
         if (this.hideTimeout) {
             clearTimeout(this.hideTimeout);
             this.hideTimeout = null;
+        }
+        if (this.controlsTimeout) {
+            clearTimeout(this.controlsTimeout);
+            this.controlsTimeout = null;
         }
         
         // Clear all tracked timeouts

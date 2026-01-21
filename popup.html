@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Video Speed Controller</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="popup-container">
+        <header>
+            <h1>Video Speed Controller</h1>
+            <div id="status" class="status-indicator" role="status" aria-live="polite"></div>
+        </header>
+
+        <section class="section">
+            <h2>Speed Presets</h2>
+            <div id="speedList" class="speed-pills" role="list" aria-label="Speed presets"></div>
+            <div class="add-speed-container">
+                <input
+                    type="number"
+                    id="newSpeedInput"
+                    class="speed-input"
+                    placeholder="Add speed (0.05-16)"
+                    min="0.05"
+                    max="16"
+                    step="0.05"
+                    aria-label="New speed value"
+                >
+                <button id="addSpeedBtn" class="add-btn" aria-label="Add speed">+</button>
+            </div>
+            <p class="hint">Click a speed to edit, × to remove</p>
+        </section>
+
+        <section class="section">
+            <h2>Keyboard Shortcuts</h2>
+            <div class="shortcut-row">
+                <label for="shortcutSpeedUp">Speed up</label>
+                <input
+                    type="text"
+                    id="shortcutSpeedUp"
+                    class="shortcut-input"
+                    maxlength="1"
+                    spellcheck="false"
+                    autocomplete="off"
+                    aria-label="Speed up shortcut"
+                >
+            </div>
+            <div class="shortcut-row">
+                <label for="shortcutSpeedDown">Slow down</label>
+                <input
+                    type="text"
+                    id="shortcutSpeedDown"
+                    class="shortcut-input"
+                    maxlength="1"
+                    spellcheck="false"
+                    autocomplete="off"
+                    aria-label="Slow down shortcut"
+                >
+            </div>
+            <div class="shortcut-row">
+                <label for="shortcutReset">Reset</label>
+                <input
+                    type="text"
+                    id="shortcutReset"
+                    class="shortcut-input"
+                    maxlength="1"
+                    spellcheck="false"
+                    autocomplete="off"
+                    aria-label="Reset speed shortcut"
+                >
+            </div>
+        </section>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

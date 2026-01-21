@@ -11,14 +11,15 @@ Video Speed Controller is a Chrome browser extension (Manifest V3) that allows u
 ### Core Files
 
 - **content.js**: Main content script injected into all pages. Contains the `VideoSpeedController` class that manages video detection, keyboard shortcuts, speed changes, and UI overlays
-- **options.js**: Options page logic for the settings UI
-- **options.html**: Settings page UI where users configure speeds and shortcuts
+- **popup.js**: Popup interface logic for the settings UI
+- **popup.html**: Popup UI where users configure speeds and shortcuts via extension icon
+- **popup.css**: Styling for the popup interface
 - **styles.css**: Styling for the speed overlay and on-screen controls
 - **manifest.json**: Chrome extension manifest (V3)
 
 ### Utility Modules
 
-These modules are imported inline (not via ES6 imports) in content.js and options.js:
+These modules are imported inline (not via ES6 imports) in content.js and popup.js:
 
 - **storage.js**: `StorageManager` class with resilient chrome.storage.sync operations, quota checking, and retry logic
 - **validation.js**: Input validation functions for speeds and keyboard shortcuts
@@ -98,14 +99,14 @@ After modifying files:
 2. Click the refresh icon on the Video Speed Controller card
 3. Reload any pages where you want to test the extension
 4. Check the browser console for content script logs
-5. Right-click extension icon > "Inspect popup" to debug options page
+5. Right-click extension icon > "Inspect popup" to debug popup interface
 
 ### Debugging
 
 - Content script logs: Open DevTools on any page (F12), check Console
-- Options page: Right-click extension icon > "Manage extension" > "Inspect views: options.html"
+- Popup interface: Right-click extension icon > "Inspect popup" to debug popup.js
 - Storage inspection: Go to DevTools > Application tab > Storage > Extension Storage
-- Common debug pattern: Look for `[VSC Settings]` prefix in options.js logs
+- Common debug pattern: Look for `[VSC Popup]` prefix in popup.js logs
 
 ## Common Patterns
 
