@@ -166,7 +166,8 @@ const defaultSettings = {
         speedUp: 'd',
         speedDown: 'a',
         reset: 's'
-    }
+    },
+    pausingResetsSpeed: false
 };
 
 // Current settings state
@@ -203,6 +204,10 @@ async function loadSettings() {
                     ...defaultSettings.shortcuts,
                     ...result.shortcuts
                 };
+            }
+
+            if (typeof result.pausingResetsSpeed === 'boolean') {
+                currentSettings.pausingResetsSpeed = result.pausingResetsSpeed;
             }
         }
 
@@ -432,6 +437,20 @@ function updateShortcutsUI() {
     }
 }
 
+// Update playback options in UI
+function updatePlaybackOptionsUI() {
+    if (elements.pausingResetsSpeed) {
+        elements.pausingResetsSpeed.checked = currentSettings.pausingResetsSpeed || false;
+    }
+}
+
+// Handle pausing resets speed checkbox change
+function handlePausingResetsSpeedChange(e) {
+    const newSettings = { ...currentSettings, pausingResetsSpeed: e.target.checked };
+    currentSettings = newSettings;
+    debouncedSave(newSettings);
+}
+
 // Handle shortcut keydown
 function handleShortcutKeydown(e) {
     e.preventDefault();
@@ -518,11 +537,12 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         debug('Storage changed:', changes);
 
         // Reload settings if they changed elsewhere
-        if (changes.customSpeeds || changes.shortcuts) {
+        if (changes.customSpeeds || changes.shortcuts || changes.pausingResetsSpeed) {
             loadSettings().then((settings) => {
                 currentSettings = settings;
                 renderSpeeds();
                 updateShortcutsUI();
+                updatePlaybackOptionsUI();
             });
         }
     }
@@ -541,7 +561,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             addSpeedBtn: document.getElementById('addSpeedBtn'),
             shortcutSpeedUp: document.getElementById('shortcutSpeedUp'),
             shortcutSpeedDown: document.getElementById('shortcutSpeedDown'),
-            shortcutReset: document.getElementById('shortcutReset')
+            shortcutReset: document.getElementById('shortcutReset'),
+            pausingResetsSpeed: document.getElementById('pausingResetsSpeed')
         };
 
         // Load settings
@@ -551,6 +572,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Render UI
         renderSpeeds();
         updateShortcutsUI();
+        updatePlaybackOptionsUI();
 
         // Add event listeners
 
@@ -581,6 +603,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (elements.shortcutReset) {
             elements.shortcutReset.addEventListener('keydown', handleShortcutKeydown);
             elements.shortcutReset.addEventListener('input', handleShortcutInput);
+        }
+
+        // Playback options
+        if (elements.pausingResetsSpeed) {
+            elements.pausingResetsSpeed.addEventListener('change', handlePausingResetsSpeedChange);
         }
 
         debug('Popup initialized successfully');

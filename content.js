@@ -208,7 +208,8 @@ class VideoSpeedController {
                 },
                 enableNumberShortcuts: true,
                 showSpeedButtons: true,
-                showShortcutHints: true
+                showShortcutHints: true,
+                pausingResetsSpeed: false
             };
 
             // Use resilient storage get
@@ -268,7 +269,8 @@ class VideoSpeedController {
                 },
                 enableNumberShortcuts: true,
                 showSpeedButtons: true,
-                showShortcutHints: true
+                showShortcutHints: true,
+                pausingResetsSpeed: false
             };
             this.speeds = [...this.defaultSpeeds];
             this.currentSpeedIndex = this.speeds.indexOf(1);
@@ -1095,7 +1097,16 @@ class VideoSpeedController {
             if (video._vscListenersAdded) return; // Avoid duplicate listeners
 
             const playHandler = () => this.updateControlsVisibilityBasedOnVideo();
-            const pauseHandler = () => this.updateControlsVisibilityBasedOnVideo();
+            const pauseHandler = () => {
+                this.updateControlsVisibilityBasedOnVideo();
+
+                // Reset speed to 1x if pausingResetsSpeed is enabled
+                if (this.settings && this.settings.pausingResetsSpeed) {
+                    video.playbackRate = 1.0;
+                    this.currentSpeedIndex = this.speeds.indexOf(1);
+                    this.showOverlay('1×');
+                }
+            };
 
             video.addEventListener('play', playHandler);
             video.addEventListener('pause', pauseHandler);
