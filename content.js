@@ -234,7 +234,9 @@ class VideoSpeedController {
             const validSpeeds = this.settings.customSpeeds
                 .filter(speed => !isNaN(speed) && speed >= 0.05 && speed <= 16);
 
-            this.speeds = [...new Set([...this.defaultSpeeds, ...validSpeeds])].sort((a, b) => a - b);
+            // Use custom speeds directly (don't merge with defaults)
+            // customSpeeds already defaults to defaultSpeeds if not customized
+            this.speeds = [...new Set(validSpeeds)].sort((a, b) => a - b);
             this.currentSpeedIndex = this.speeds.indexOf(1);
 
             // Update UI
