@@ -60,9 +60,13 @@ class VideoSpeedController {
         const button = document.createElement('div');
         button.className = 'video-speed-settings-button';
         button.innerHTML = `
-            <button class="settings-link">
-                ⚙️ Video Speed Settings
-            </button>
+            <div class="settings-notice">
+                <div class="icon">⚙️</div>
+                <div class="text">
+                    <strong>Video Speed Controller Active</strong><br>
+                    <small>Click the extension icon in your Chrome toolbar to open settings</small>
+                </div>
+            </div>
         `;
         button.style.cssText = `
             position: fixed;
@@ -70,28 +74,46 @@ class VideoSpeedController {
             right: 20px;
             z-index: 2147483647;
             background: #ff0000;
-            padding: 15px 20px;
+            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        `;
-
-        const btn = button.querySelector('.settings-link');
-        btn.style.cssText = `
-            background: white;
-            color: #ff0000;
-            border: 2px solid #ff0000;
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: bold;
+            max-width: 300px;
             cursor: pointer;
-            border-radius: 4px;
+            transition: transform 0.2s;
         `;
 
-        btn.addEventListener('click', () => {
-            // Open popup in new tab (temporary solution for testing)
-            const popupUrl = chrome.runtime.getURL('popup.html');
-            window.open(popupUrl, 'VideoSpeedSettings', 'width=400,height=600');
+        const notice = button.querySelector('.settings-notice');
+        notice.style.cssText = `
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        `;
+
+        const icon = notice.querySelector('.icon');
+        icon.style.cssText = `
+            font-size: 32px;
+            flex-shrink: 0;
+        `;
+
+        const text = notice.querySelector('.text');
+        text.style.cssText = `
+            flex: 1;
+            line-height: 1.4;
+        `;
+
+        // Add hover effect
+        button.addEventListener('mouseenter', () => {
+            button.style.transform = 'scale(1.05)';
+        });
+        button.addEventListener('mouseleave', () => {
+            button.style.transform = 'scale(1)';
+        });
+
+        // Click to dismiss
+        button.addEventListener('click', () => {
+            button.style.display = 'none';
         });
 
         document.body.appendChild(button);
