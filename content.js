@@ -9,6 +9,7 @@ class VideoSpeedController {
         this.settings = null;
         this.overlay = this.createOverlay();
         this.controls = this.createControls();
+        this.settingsButton = this.createSettingsButton();
         this.currentVideo = null;
         this.controlsTimeout = null;
         this.isMouseOverVideo = false;
@@ -53,6 +54,48 @@ class VideoSpeedController {
         `;
         document.body.appendChild(controls);
         return controls;
+    }
+
+    createSettingsButton() {
+        const button = document.createElement('div');
+        button.className = 'video-speed-settings-button';
+        button.innerHTML = `
+            <button class="settings-link">
+                ⚙️ Video Speed Settings
+            </button>
+        `;
+        button.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2147483647;
+            background: #ff0000;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        `;
+
+        const btn = button.querySelector('.settings-link');
+        btn.style.cssText = `
+            background: white;
+            color: #ff0000;
+            border: 2px solid #ff0000;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+        `;
+
+        btn.addEventListener('click', () => {
+            // Open popup in new tab (temporary solution for testing)
+            const popupUrl = chrome.runtime.getURL('popup.html');
+            window.open(popupUrl, 'VideoSpeedSettings', 'width=400,height=600');
+        });
+
+        document.body.appendChild(button);
+        return button;
     }
 
     async loadSettings() {
@@ -1023,8 +1066,12 @@ class VideoSpeedController {
             if (this.controls && this.controls.parentNode) {
                 this.controls.parentNode.removeChild(this.controls);
             }
+            if (this.settingsButton && this.settingsButton.parentNode) {
+                this.settingsButton.parentNode.removeChild(this.settingsButton);
+            }
             this.overlay = null;
             this.controls = null;
+            this.settingsButton = null;
         } catch (error) {
             console.error('Error removing DOM elements:', error);
         }
