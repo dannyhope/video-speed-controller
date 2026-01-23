@@ -9,7 +9,7 @@ class VideoSpeedController {
         this.settings = null;
         this.overlay = this.createOverlay();
         this.controls = this.createControls();
-        this.settingsButton = this.createSettingsButton();
+        this.settingsModal = this.createSettingsModal();
         this.currentVideo = null;
         this.controlsTimeout = null;
         this.isMouseOverVideo = false;
@@ -51,73 +51,126 @@ class VideoSpeedController {
             <button class="speed-up">
                 <span class="icon">+</span>
             </button>
+            <button class="speed-settings">
+                <span class="icon">⚙︎</span>
+            </button>
         `;
         document.body.appendChild(controls);
         return controls;
     }
 
-    createSettingsButton() {
-        const button = document.createElement('div');
-        button.className = 'video-speed-settings-button';
-        button.innerHTML = `
-            <div class="settings-notice">
-                <div class="icon">⚙️</div>
-                <div class="text">
-                    <strong>Video Speed Controller Active</strong><br>
-                    <small>Click the extension icon in your Chrome toolbar to open settings</small>
+    createSettingsModal() {
+        const modal = document.createElement('div');
+        modal.className = 'video-speed-settings-modal';
+        modal.style.display = 'none';
+        modal.innerHTML = `
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Video Speed Controller Settings</h2>
+                    <button class="modal-close">×</button>
                 </div>
+                <iframe class="settings-iframe" src="${chrome.runtime.getURL('popup.html')}"></iframe>
             </div>
         `;
-        button.style.cssText = `
+
+        // Style the modal
+        modal.style.cssText = `
             position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 2147483647;
-            background: #ff0000;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 2147483646;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            max-width: 300px;
-            cursor: pointer;
-            transition: transform 0.2s;
         `;
 
-        const notice = button.querySelector('.settings-notice');
-        notice.style.cssText = `
-            color: white;
+        const overlay = modal.querySelector('.modal-overlay');
+        overlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+        `;
+
+        const content = modal.querySelector('.modal-content');
+        content.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 450px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        `;
+
+        const header = modal.querySelector('.modal-header');
+        header.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        `;
+
+        const h2 = header.querySelector('h2');
+        h2.style.cssText = `
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        `;
+
+        const closeBtn = modal.querySelector('.modal-close');
+        closeBtn.style.cssText = `
+            background: none;
+            border: none;
+            font-size: 32px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            justify-content: center;
+            line-height: 1;
         `;
 
-        const icon = notice.querySelector('.icon');
-        icon.style.cssText = `
-            font-size: 32px;
-            flex-shrink: 0;
-        `;
-
-        const text = notice.querySelector('.text');
-        text.style.cssText = `
+        const iframe = modal.querySelector('.settings-iframe');
+        iframe.style.cssText = `
+            border: none;
             flex: 1;
-            line-height: 1.4;
+            min-height: 500px;
+            width: 100%;
         `;
 
-        // Add hover effect
-        button.addEventListener('mouseenter', () => {
-            button.style.transform = 'scale(1.05)';
-        });
-        button.addEventListener('mouseleave', () => {
-            button.style.transform = 'scale(1)';
+        // Close modal on overlay click
+        overlay.addEventListener('click', () => {
+            modal.style.display = 'none';
         });
 
-        // Click to dismiss
-        button.addEventListener('click', () => {
-            button.style.display = 'none';
+        // Close modal on close button click
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
         });
 
-        document.body.appendChild(button);
-        return button;
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.style.display !== 'none') {
+                modal.style.display = 'none';
+            }
+        });
+
+        document.body.appendChild(modal);
+        return modal;
     }
 
     async loadSettings() {
@@ -820,6 +873,20 @@ class VideoSpeedController {
                 addSafeListener(resetBtn, 'click', resetHandler);
             }
 
+            const settingsBtn = getButton('.speed-settings');
+            if (settingsBtn) {
+                const settingsHandler = () => {
+                    try {
+                        if (this.settingsModal) {
+                            this.settingsModal.style.display = 'block';
+                        }
+                    } catch (clickError) {
+                        console.error('Error in settings click handler:', clickError);
+                    }
+                };
+                addSafeListener(settingsBtn, 'click', settingsHandler);
+            }
+
             // Listen for settings updates
             const storageHandler = (changes) => {
                 try {
@@ -1088,12 +1155,12 @@ class VideoSpeedController {
             if (this.controls && this.controls.parentNode) {
                 this.controls.parentNode.removeChild(this.controls);
             }
-            if (this.settingsButton && this.settingsButton.parentNode) {
-                this.settingsButton.parentNode.removeChild(this.settingsButton);
+            if (this.settingsModal && this.settingsModal.parentNode) {
+                this.settingsModal.parentNode.removeChild(this.settingsModal);
             }
             this.overlay = null;
             this.controls = null;
-            this.settingsButton = null;
+            this.settingsModal = null;
         } catch (error) {
             console.error('Error removing DOM elements:', error);
         }
