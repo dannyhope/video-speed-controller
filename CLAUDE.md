@@ -52,15 +52,16 @@ Default speeds: `[0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4, 6, 10
 Settings stored in chrome.storage.sync:
 ```javascript
 {
-  customSpeeds: number[],           // Array of playback speeds
+  customSpeeds: number[],           // Array of playback speeds (1x cannot be removed)
   shortcuts: {
     speedUp: string,                // Single character (default: 'd')
-    speedDown: string,              // Single character (default: 's')
-    reset: string                   // Single character (default: 'r')
+    speedDown: string,              // Single character (default: 'a')
+    reset: string                   // Single character (default: 's')
   },
   enableNumberShortcuts: boolean,   // Allow 1-9 keys to jump to speeds
   showSpeedButtons: boolean,        // Show on-screen controls
-  showShortcutHints: true          // Show keyboard hints on buttons
+  showShortcutHints: true,         // Show keyboard hints on buttons
+  pausingResetsSpeed: boolean       // Reset speed to 1x when pausing (default: false)
 }
 ```
 

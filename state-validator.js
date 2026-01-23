@@ -396,10 +396,11 @@ export class StateValidator {
         // Repair settings
         if (repaired.settings) {
             const defaultSettings = {
-                shortcuts: { speedUp: 'd', speedDown: 's', reset: 'r' },
+                shortcuts: { speedUp: 'd', speedDown: 'a', reset: 's' },
                 enableNumberShortcuts: true,
                 showSpeedButtons: true,
-                showShortcutHints: true
+                showShortcutHints: true,
+                pausingResetsSpeed: false
             };
 
             for (const [key, defaultValue] of Object.entries(defaultSettings)) {

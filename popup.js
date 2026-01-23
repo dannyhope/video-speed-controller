@@ -157,18 +157,9 @@ async function safeStorageSet(items) {
     }
 }
 
-// Default settings
-const defaultSpeeds = [0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4, 6, 10, 16];
-
-const defaultSettings = {
-    customSpeeds: defaultSpeeds,
-    shortcuts: {
-        speedUp: 'd',
-        speedDown: 'a',
-        reset: 's'
-    },
-    pausingResetsSpeed: false
-};
+// Default settings (loaded from constants.js)
+const defaultSpeeds = DEFAULT_SPEEDS;
+const defaultSettings = DEFAULT_SETTINGS;
 
 // Current settings state
 let currentSettings = { ...defaultSettings };
@@ -277,27 +268,41 @@ function renderSpeeds() {
         // Click to edit
         valueEl.addEventListener('click', () => startEditingSpeed(index));
 
-        // Create remove button
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'remove-speed';
-        removeBtn.innerHTML = '×';
-        removeBtn.setAttribute('aria-label', `Remove ${speed}× speed`);
-        removeBtn.setAttribute('data-index', index);
+        // Create remove button (but not for 1x speed)
+        if (speed !== 1) {
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-speed';
+            removeBtn.innerHTML = '×';
+            removeBtn.setAttribute('aria-label', `Remove ${speed}× speed`);
+            removeBtn.setAttribute('data-index', index);
 
-        // Click to remove
-        removeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            removeSpeed(index);
-        });
+            // Click to remove
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeSpeed(index);
+            });
 
-        pill.appendChild(valueEl);
-        pill.appendChild(removeBtn);
+            pill.appendChild(valueEl);
+            pill.appendChild(removeBtn);
+        } else {
+            pill.appendChild(valueEl);
+            pill.classList.add('non-removable');
+        }
+
         elements.speedList.appendChild(pill);
     });
 }
 
 // Start editing a speed
 function startEditingSpeed(index) {
+    const currentValue = currentSettings.customSpeeds[index];
+
+    // Prevent editing 1x speed (normal playback speed)
+    if (currentValue === 1) {
+        showStatus('Cannot edit 1× (normal speed)');
+        return;
+    }
+
     if (editingSpeedIndex !== null) {
         cancelEditingSpeed();
     }
@@ -307,7 +312,6 @@ function startEditingSpeed(index) {
     pill.classList.add('editing');
 
     const valueEl = pill.querySelector('.speed-value');
-    const currentValue = currentSettings.customSpeeds[index];
 
     // Replace span with input
     const input = document.createElement('input');
@@ -376,6 +380,14 @@ function cancelEditingSpeed() {
 
 // Remove a speed
 function removeSpeed(index) {
+    const speedToRemove = currentSettings.customSpeeds[index];
+
+    // Prevent removing 1x speed (normal playback speed)
+    if (speedToRemove === 1) {
+        showStatus('Cannot remove 1× (normal speed)');
+        return;
+    }
+
     const newSpeeds = currentSettings.customSpeeds.filter((_, i) => i !== index);
 
     // Validate (must have at least 3)

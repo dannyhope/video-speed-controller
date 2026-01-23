@@ -1,6 +1,6 @@
 class VideoSpeedController {
     constructor() {
-        this.defaultSpeeds = [0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4, 6, 10, 16];
+        this.defaultSpeeds = DEFAULT_SPEEDS;
         this.speeds = [...this.defaultSpeeds];
         this.currentSpeedIndex = this.speeds.indexOf(1);
         this.previousSpeedIndex = null;
@@ -198,19 +198,8 @@ class VideoSpeedController {
             
             // Run migration first
             const migrationResult = await migrateSettings();
-            
-            const defaultSettings = {
-                customSpeeds: this.defaultSpeeds,
-                shortcuts: {
-                    speedUp: 'd',
-                    speedDown: 'a',
-                    reset: 's'
-                },
-                enableNumberShortcuts: true,
-                showSpeedButtons: true,
-                showShortcutHints: true,
-                pausingResetsSpeed: false
-            };
+
+            const defaultSettings = DEFAULT_SETTINGS;
 
             // Use resilient storage get
             const storageResult = await this.safeStorageGet(defaultSettings);
@@ -262,18 +251,7 @@ class VideoSpeedController {
         } catch (error) {
             console.error('Error loading settings:', error);
             // Fallback to default settings
-            this.settings = {
-                customSpeeds: this.defaultSpeeds,
-                shortcuts: {
-                    speedUp: 'd',
-                    speedDown: 'a',
-                    reset: 's'
-                },
-                enableNumberShortcuts: true,
-                showSpeedButtons: true,
-                showShortcutHints: true,
-                pausingResetsSpeed: false
-            };
+            this.settings = DEFAULT_SETTINGS;
             this.speeds = [...this.defaultSpeeds];
             this.currentSpeedIndex = this.speeds.indexOf(1);
             try {
@@ -1322,20 +1300,17 @@ class VideoSpeedController {
             // Repair settings
             if (!this.settings || typeof this.settings !== 'object') {
                 this.settings = {
-                    customSpeeds: this.speeds,
-                    shortcuts: { speedUp: 'd', speedDown: 's', reset: 'r' },
-                    enableNumberShortcuts: true,
-                    showSpeedButtons: true,
-                    showShortcutHints: true
+                    ...DEFAULT_SETTINGS,
+                    customSpeeds: this.speeds
                 };
                 repairs.push('Reset settings to defaults');
             } else {
                 // Repair shortcuts
                 if (!this.settings.shortcuts || typeof this.settings.shortcuts !== 'object') {
-                    this.settings.shortcuts = { speedUp: 'd', speedDown: 's', reset: 'r' };
+                    this.settings.shortcuts = DEFAULT_SETTINGS.shortcuts;
                     repairs.push('Reset shortcuts to defaults');
                 } else {
-                    const defaultShortcuts = { speedUp: 'd', speedDown: 's', reset: 'r' };
+                    const defaultShortcuts = DEFAULT_SETTINGS.shortcuts;
                     for (const [key, defaultValue] of Object.entries(defaultShortcuts)) {
                         if (!(key in this.settings.shortcuts) || 
                             typeof this.settings.shortcuts[key] !== 'string' || 

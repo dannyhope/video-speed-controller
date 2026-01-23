@@ -12,7 +12,7 @@ export const SETTINGS_SCHEMAS = {
         description: 'Initial schema',
         fields: {
             customSpeeds: { type: 'array', required: true, default: [0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4, 6, 10, 16] },
-            shortcuts: { type: 'object', required: true, default: { speedUp: 'd', speedDown: 's', reset: 'r' } },
+            shortcuts: { type: 'object', required: true, default: { speedUp: 'd', speedDown: 'a', reset: 's' } },
             enableNumberShortcuts: { type: 'boolean', required: true, default: true },
             showSpeedButtons: { type: 'boolean', required: true, default: true },
             showShortcutHints: { type: 'boolean', required: true, default: true }
@@ -23,7 +23,7 @@ export const SETTINGS_SCHEMAS = {
         description: 'Added activeSpeeds tracking and improved validation',
         fields: {
             customSpeeds: { type: 'array', required: true, default: [0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4, 6, 10, 16] },
-            shortcuts: { type: 'object', required: true, default: { speedUp: 'd', speedDown: 's', reset: 'r' } },
+            shortcuts: { type: 'object', required: true, default: { speedUp: 'd', speedDown: 'a', reset: 's' } },
             enableNumberShortcuts: { type: 'boolean', required: true, default: true },
             showSpeedButtons: { type: 'boolean', required: true, default: true },
             showShortcutHints: { type: 'boolean', required: true, default: true },
