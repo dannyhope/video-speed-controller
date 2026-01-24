@@ -63,18 +63,76 @@ class VideoSpeedController {
         const modal = document.createElement('div');
         modal.className = 'video-speed-settings-modal';
         modal.style.display = 'none';
-        modal.innerHTML = `
-            <div class="modal-overlay"></div>
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Video Speed Controller Settings</h2>
-                    <button class="modal-close">×</button>
-                </div>
-                <iframe class="settings-iframe" src="${chrome.runtime.getURL('popup.html')}"></iframe>
-            </div>
-        `;
 
-        // Style the modal
+        // Fetch and inject popup.html content
+        fetch(chrome.runtime.getURL('popup.html'))
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const popupContainer = doc.querySelector('.popup-container');
+
+                modal.innerHTML = `
+                    <div class="modal-overlay"></div>
+                    <div class="modal-content">
+                        <button class="modal-close" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 32px; color: #666; cursor: pointer; z-index: 10; width: 32px; height: 32px;">×</button>
+                        <div class="embedded-popup"></div>
+                    </div>
+                `;
+
+                const embeddedPopup = modal.querySelector('.embedded-popup');
+
+                // Load popup CSS
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = chrome.runtime.getURL('popup.css');
+                embeddedPopup.appendChild(link);
+
+                // Add popup HTML
+                embeddedPopup.appendChild(popupContainer);
+
+                // Load constants.js first
+                const constantsScript = document.createElement('script');
+                constantsScript.src = chrome.runtime.getURL('constants.js');
+                constantsScript.onload = () => {
+                    // Then load popup.js
+                    const script = document.createElement('script');
+                    script.src = chrome.runtime.getURL('popup.js');
+                    embeddedPopup.appendChild(script);
+                };
+                embeddedPopup.appendChild(constantsScript);
+
+                this.setupModalStyles(modal);
+                this.setupModalCloseHandlers(modal);
+            })
+            .catch(err => {
+                console.error('Failed to load popup:', err);
+                modal.innerHTML = `
+                    <div class="modal-overlay"></div>
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Settings</h2>
+                            <button class="modal-close">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <p style="text-align: center; padding: 40px 20px;">
+                                Please click the extension icon in your toolbar to access settings.
+                            </p>
+                        </div>
+                    </div>
+                `;
+                this.setupModalStyles(modal);
+                this.setupModalCloseHandlers(modal);
+            });
+
+        this.setupModalStyles(modal);
+        this.setupModalCloseHandlers(modal);
+
+        document.body.appendChild(modal);
+        return modal;
+    }
+
+    setupModalStyles(modal) {
         modal.style.cssText = `
             position: fixed;
             top: 0;
@@ -111,56 +169,39 @@ class VideoSpeedController {
             flex-direction: column;
         `;
 
-        const header = modal.querySelector('.modal-header');
-        header.style.cssText = `
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid #e0e0e0;
-        `;
+        const content = modal.querySelector('.modal-content');
+        if (content) {
+            content.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+                width: 90%;
+                max-width: 450px;
+                max-height: 90vh;
+                overflow-y: auto;
+            `;
+        }
+    }
 
-        const h2 = header.querySelector('h2');
-        h2.style.cssText = `
-            margin: 0;
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-        `;
-
+    setupModalCloseHandlers(modal) {
+        const overlay = modal.querySelector('.modal-overlay');
         const closeBtn = modal.querySelector('.modal-close');
-        closeBtn.style.cssText = `
-            background: none;
-            border: none;
-            font-size: 32px;
-            color: #666;
-            cursor: pointer;
-            padding: 0;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-        `;
 
-        const iframe = modal.querySelector('.settings-iframe');
-        iframe.style.cssText = `
-            border: none;
-            flex: 1;
-            min-height: 500px;
-            width: 100%;
-        `;
+        if (overlay) {
+            overlay.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+        }
 
-        // Close modal on overlay click
-        overlay.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-
-        // Close modal on close button click
-        closeBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+        }
 
         // Close on Escape key
         document.addEventListener('keydown', (e) => {
@@ -168,9 +209,6 @@ class VideoSpeedController {
                 modal.style.display = 'none';
             }
         });
-
-        document.body.appendChild(modal);
-        return modal;
     }
 
     async loadSettings() {
