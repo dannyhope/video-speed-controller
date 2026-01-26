@@ -1,1 +1,23 @@
 icons/.DS_Store
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Test output
+coverage/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build output
+dist/
+build/
