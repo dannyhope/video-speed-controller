@@ -327,15 +327,21 @@ class VideoSpeedController {
                 return element && element.isConnected ? element : null;
             };
 
+            // Format shortcut for display (show all keys, uppercase)
+            const formatShortcut = (shortcutString) => {
+                if (!shortcutString) return '';
+                return shortcutString.split(',').map(k => k.trim().toUpperCase()).join(', ');
+            };
+
             const speedDownBtn = getButton('.speed-down');
             const resetBtn = getButton('.speed-reset');
             const speedUpBtn = getButton('.speed-up');
 
             // Update tooltips with keyboard shortcuts
             if (this.settings.showShortcutHints) {
-                if (speedDownBtn) speedDownBtn.title = `Decrease speed [${this.settings.shortcuts.speedDown.toUpperCase()}]`;
-                if (resetBtn) resetBtn.title = `Reset to normal speed [${this.settings.shortcuts.reset.toUpperCase()}]`;
-                if (speedUpBtn) speedUpBtn.title = `Increase speed [${this.settings.shortcuts.speedUp.toUpperCase()}]`;
+                if (speedDownBtn) speedDownBtn.title = `Decrease speed [${formatShortcut(this.settings.shortcuts.speedDown)}]`;
+                if (resetBtn) resetBtn.title = `Reset to normal speed [${formatShortcut(this.settings.shortcuts.reset)}]`;
+                if (speedUpBtn) speedUpBtn.title = `Increase speed [${formatShortcut(this.settings.shortcuts.speedUp)}]`;
             } else {
                 if (speedDownBtn) speedDownBtn.title = 'Decrease speed';
                 if (resetBtn) resetBtn.title = 'Reset to normal speed';
@@ -656,6 +662,13 @@ class VideoSpeedController {
                 return element && element instanceof Element && element.isConnected && element.nodeType === Node.ELEMENT_NODE;
             };
             
+            // Helper to check if a key matches any key in a comma-separated shortcut string
+            const matchesShortcut = (pressedKey, shortcutString) => {
+                if (!shortcutString) return false;
+                const keys = shortcutString.split(',').map(k => k.trim().toLowerCase());
+                return keys.includes(pressedKey);
+            };
+
             // Keydown handler
             const keydownHandler = (e) => {
                 try {
@@ -666,21 +679,21 @@ class VideoSpeedController {
 
                     const key = e.key.toLowerCase();
                     let actionTaken = false;
-                    
-                    if (key === this.settings.shortcuts.speedUp) {
+
+                    if (matchesShortcut(key, this.settings.shortcuts.speedUp)) {
                         this.changeSpeed(video, 1);
                         actionTaken = true;
-                    } else if (key === this.settings.shortcuts.speedDown) {
+                    } else if (matchesShortcut(key, this.settings.shortcuts.speedDown)) {
                         this.changeSpeed(video, -1);
                         actionTaken = true;
-                    } else if (key === this.settings.shortcuts.reset) {
+                    } else if (matchesShortcut(key, this.settings.shortcuts.reset)) {
                         // Handle long press for speed inversion
                         if (!this.isLongPressing) {
                             this.startLongPress(video);
                         }
                         actionTaken = true;
                     }
-                    
+
                     // Show controls when any speed shortcut is used
                     if (actionTaken && this.currentVideo) {
                         this.showControls();
@@ -696,8 +709,8 @@ class VideoSpeedController {
                     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
                     const key = e.key.toLowerCase();
-                    
-                    if (key === this.settings.shortcuts.reset && this.isLongPressing) {
+
+                    if (matchesShortcut(key, this.settings.shortcuts.reset) && this.isLongPressing) {
                         this.endLongPress(getCurrentVideo());
                     }
                 } catch (keyUpError) {
@@ -1218,7 +1231,7 @@ class VideoSpeedController {
             if (!this.settings || typeof this.settings !== 'object') {
                 errors.push('Settings is not a valid object');
             } else {
-                // Validate shortcuts
+                // Validate shortcuts (supports comma-separated keys)
                 if (!this.settings.shortcuts || typeof this.settings.shortcuts !== 'object') {
                     errors.push('Shortcuts is not a valid object');
                 } else {
@@ -1226,15 +1239,24 @@ class VideoSpeedController {
                     for (const key of requiredKeys) {
                         if (!(key in this.settings.shortcuts)) {
                             errors.push(`Missing shortcut: ${key}`);
-                        } else if (typeof this.settings.shortcuts[key] !== 'string' || this.settings.shortcuts[key].length !== 1) {
+                        } else if (typeof this.settings.shortcuts[key] !== 'string' || this.settings.shortcuts[key].length === 0) {
                             errors.push(`Invalid shortcut for ${key}`);
                         }
                     }
-                    
-                    // Check for duplicate shortcuts
-                    const values = Object.values(this.settings.shortcuts);
-                    if (values.length !== new Set(values).size) {
-                        errors.push('Shortcuts must be unique');
+
+                    // Check for duplicate shortcuts across all key lists
+                    const allKeys = {};
+                    for (const [action, shortcutString] of Object.entries(this.settings.shortcuts)) {
+                        if (typeof shortcutString === 'string') {
+                            const keys = shortcutString.split(',').map(k => k.trim().toLowerCase());
+                            for (const singleKey of keys) {
+                                if (allKeys[singleKey] && allKeys[singleKey] !== action) {
+                                    errors.push(`Key "${singleKey}" is used by multiple actions`);
+                                } else {
+                                    allKeys[singleKey] = action;
+                                }
+                            }
+                        }
                     }
                 }
                 
@@ -1305,16 +1327,16 @@ class VideoSpeedController {
                 };
                 repairs.push('Reset settings to defaults');
             } else {
-                // Repair shortcuts
+                // Repair shortcuts (supports comma-separated keys)
                 if (!this.settings.shortcuts || typeof this.settings.shortcuts !== 'object') {
                     this.settings.shortcuts = DEFAULT_SETTINGS.shortcuts;
                     repairs.push('Reset shortcuts to defaults');
                 } else {
                     const defaultShortcuts = DEFAULT_SETTINGS.shortcuts;
                     for (const [key, defaultValue] of Object.entries(defaultShortcuts)) {
-                        if (!(key in this.settings.shortcuts) || 
-                            typeof this.settings.shortcuts[key] !== 'string' || 
-                            this.settings.shortcuts[key].length !== 1) {
+                        if (!(key in this.settings.shortcuts) ||
+                            typeof this.settings.shortcuts[key] !== 'string' ||
+                            this.settings.shortcuts[key].length === 0) {
                             this.settings.shortcuts[key] = defaultValue;
                             repairs.push(`Repaired shortcut: ${key}`);
                         }

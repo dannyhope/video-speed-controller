@@ -42,7 +42,8 @@ function validateSpeedArray(speeds) {
     };
 }
 
-function validateShortcut(key) {
+// Validate a single key character
+function validateSingleKey(key) {
     if (typeof key !== 'string') return { valid: false, error: 'Must be a string' };
 
     const sanitized = key.trim().toLowerCase();
@@ -58,12 +59,42 @@ function validateShortcut(key) {
     return { valid: true, value: sanitized };
 }
 
+// Validate shortcut (supports comma-separated keys like "d, =, +")
+function validateShortcut(keys) {
+    if (typeof keys !== 'string') return { valid: false, error: 'Must be a string' };
+
+    const keyList = keys.split(',').map(k => k.trim().toLowerCase()).filter(k => k.length > 0);
+
+    if (keyList.length === 0) return { valid: false, error: 'Cannot be empty' };
+
+    const validKeys = [];
+    const errors = [];
+
+    for (const key of keyList) {
+        const result = validateSingleKey(key);
+        if (result.valid) {
+            if (!validKeys.includes(result.value)) {
+                validKeys.push(result.value);
+            }
+        } else {
+            errors.push(`"${key}": ${result.error}`);
+        }
+    }
+
+    if (validKeys.length === 0) {
+        return { valid: false, error: errors.join(', ') || 'No valid keys' };
+    }
+
+    return { valid: true, value: validKeys.join(', '), keys: validKeys, errors };
+}
+
 function validateShortcuts(shortcuts) {
     if (typeof shortcuts !== 'object' || shortcuts === null) {
         return { valid: false, error: 'Must be an object' };
     }
 
     const validatedShortcuts = {};
+    const allKeys = {}; // Track which action each key belongs to
     const errors = [];
 
     const requiredKeys = ['speedUp', 'speedDown', 'reset'];
@@ -77,15 +108,18 @@ function validateShortcuts(shortcuts) {
         const result = validateShortcut(shortcuts[key]);
         if (result.valid) {
             validatedShortcuts[key] = result.value;
+
+            // Check for conflicts with other actions
+            for (const singleKey of result.keys) {
+                if (allKeys[singleKey] && allKeys[singleKey] !== key) {
+                    errors.push(`Key "${singleKey}" is used by both ${allKeys[singleKey]} and ${key}`);
+                } else {
+                    allKeys[singleKey] = key;
+                }
+            }
         } else {
             errors.push(`${key}: ${result.error}`);
         }
-    }
-
-    // Check for duplicates
-    const values = Object.values(validatedShortcuts);
-    if (values.length !== new Set(values).size) {
-        errors.push('All shortcuts must be unique');
     }
 
     return {
@@ -463,22 +497,39 @@ function handlePausingResetsSpeedChange(e) {
     debouncedSave(newSettings);
 }
 
-// Handle shortcut keydown
+// Handle shortcut keydown - adds pressed key to existing keys
 function handleShortcutKeydown(e) {
-    e.preventDefault();
-
     const inputId = e.target.id;
     const shortcutKey = inputId.replace('shortcut', '');
     const shortcutName = shortcutKey.charAt(0).toLowerCase() + shortcutKey.slice(1);
-    const value = e.key.toLowerCase();
+    const pressedKey = e.key.toLowerCase();
 
-    // Ignore modifier keys
-    if (['control', 'alt', 'shift', 'meta', 'tab', 'escape'].includes(value)) {
+    // Ignore modifier keys and navigation
+    if (['control', 'alt', 'shift', 'meta', 'tab', 'escape', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'home', 'end'].includes(pressedKey)) {
         return;
     }
 
-    // Validate shortcut
-    const validation = validateShortcut(value);
+    // Allow backspace and delete for editing
+    if (['backspace', 'delete'].includes(pressedKey)) {
+        return;
+    }
+
+    // Prevent default for other keys
+    e.preventDefault();
+
+    // Get current keys for this shortcut
+    const currentKeys = currentSettings.shortcuts[shortcutName] || '';
+    const keyList = currentKeys.split(',').map(k => k.trim()).filter(k => k.length > 0);
+
+    // Add new key if not already present
+    if (!keyList.includes(pressedKey)) {
+        keyList.push(pressedKey);
+    }
+
+    const newValue = keyList.join(', ');
+
+    // Validate the new shortcut
+    const validation = validateShortcut(newValue);
     if (!validation.valid) {
         e.target.classList.add('error');
         showStatus(validation.error);
@@ -503,21 +554,26 @@ function handleShortcutKeydown(e) {
     debouncedSave(newSettings);
 }
 
-// Handle shortcut input (typing/pasting)
-function handleShortcutInput(e) {
-    const inputId = e.target.id;
+// Handle shortcut input (typing/pasting) - debounced to allow editing
+const handleShortcutInputDebounced = debounce((inputId, value) => {
     const shortcutKey = inputId.replace('shortcut', '');
     const shortcutName = shortcutKey.charAt(0).toLowerCase() + shortcutKey.slice(1);
-    const value = e.target.value.trim().toLowerCase();
 
-    if (value.length === 0) return;
+    if (value.length === 0) {
+        // Don't allow empty - restore previous value
+        updateShortcutsUI();
+        return;
+    }
 
     // Validate shortcut
     const validation = validateShortcut(value);
     if (!validation.valid) {
-        e.target.classList.add('error');
-        showStatus(validation.error);
-        setTimeout(() => e.target.classList.remove('error'), 2000);
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.classList.add('error');
+            showStatus(validation.error);
+            setTimeout(() => input.classList.remove('error'), 2000);
+        }
         return;
     }
 
@@ -525,9 +581,12 @@ function handleShortcutInput(e) {
     const newShortcuts = { ...currentSettings.shortcuts, [shortcutName]: validation.value };
     const shortcutValidation = validateShortcuts(newShortcuts);
     if (!shortcutValidation.valid) {
-        e.target.classList.add('error');
-        showStatus(shortcutValidation.errors.join(', '));
-        setTimeout(() => e.target.classList.remove('error'), 2000);
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.classList.add('error');
+            showStatus(shortcutValidation.errors.join(', '));
+            setTimeout(() => input.classList.remove('error'), 2000);
+        }
         return;
     }
 
@@ -536,6 +595,11 @@ function handleShortcutInput(e) {
     currentSettings = newSettings;
     updateShortcutsUI();
     debouncedSave(newSettings);
+}, 500);
+
+function handleShortcutInput(e) {
+    const value = e.target.value.trim().toLowerCase();
+    handleShortcutInputDebounced(e.target.id, value);
 }
 
 // Debounced save function
