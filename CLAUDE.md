@@ -138,6 +138,16 @@ if (!result.success) {
 }
 ```
 
+## Manual Testing
+
+Some tests cannot be automated reliably (YouTube, Netflix, etc.). See `docs/manual-tests.md` for the checklist.
+
+**Reminder:** During vibe coding sessions, prompt Danny to run manual tests if:
+- Keyboard handling code has changed
+- Video detection logic has changed
+- A new site-specific feature has been added
+- It's been more than 2 weeks since the last manual test run
+
 ## Known Issues
 
 See docs/tech-debt.md for comprehensive list. Key issues:
@@ -146,7 +156,7 @@ See docs/tech-debt.md for comprehensive list. Key issues:
 - **Duplicate code**: Settings defaults defined in multiple files
 - **Memory management**: Some event listeners may not be properly cleaned up
 - **Permissions**: `<all_urls>` is overly broad
-- **No tests**: Zero unit or integration tests
+- **Limited test coverage**: E2E tests exist but don't cover all sites (see docs/manual-tests.md)
 
 ## File Organisation
 
