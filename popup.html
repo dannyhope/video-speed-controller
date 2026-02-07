@@ -84,6 +84,33 @@
                 </label>
             </div>
         </section>
+
+        <section class="section">
+            <h2>Skip Silence</h2>
+            <div class="checkbox-row">
+                <label for="skipSilenceEnabled">
+                    <input
+                        type="checkbox"
+                        id="skipSilenceEnabled"
+                        aria-label="Auto-skip sections without captions"
+                    >
+                    Auto-skip sections without captions
+                </label>
+            </div>
+            <div class="shortcut-row">
+                <label for="shortcutSkipSilence">Toggle shortcut</label>
+                <input
+                    type="text"
+                    id="shortcutSkipSilence"
+                    class="shortcut-input"
+                    spellcheck="false"
+                    autocomplete="off"
+                    aria-label="Skip silence toggle shortcut"
+                    title="Enter keys separated by commas (e.g., g)"
+                >
+            </div>
+            <p class="hint">Works with videos that have HTML5 captions (Vimeo, educational sites)</p>
+        </section>
     </div>
 
     <script src="constants.js"></script>

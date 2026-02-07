@@ -97,7 +97,7 @@ function validateShortcuts(shortcuts) {
     const allKeys = {}; // Track which action each key belongs to
     const errors = [];
 
-    const requiredKeys = ['speedUp', 'speedDown', 'reset'];
+    const requiredKeys = ['speedUp', 'speedDown', 'reset', 'skipSilence'];
 
     for (const key of requiredKeys) {
         if (!(key in shortcuts)) {
@@ -233,6 +233,14 @@ async function loadSettings() {
 
             if (typeof result.pausingResetsSpeed === 'boolean') {
                 currentSettings.pausingResetsSpeed = result.pausingResetsSpeed;
+            }
+
+            if (typeof result.skipSilenceEnabled === 'boolean') {
+                currentSettings.skipSilenceEnabled = result.skipSilenceEnabled;
+            }
+
+            if (typeof result.skipSilenceGapThreshold === 'number') {
+                currentSettings.skipSilenceGapThreshold = result.skipSilenceGapThreshold;
             }
         }
 
@@ -481,6 +489,9 @@ function updateShortcutsUI() {
     if (elements.shortcutReset) {
         elements.shortcutReset.value = currentSettings.shortcuts.reset;
     }
+    if (elements.shortcutSkipSilence) {
+        elements.shortcutSkipSilence.value = currentSettings.shortcuts.skipSilence || 'g';
+    }
 }
 
 // Update playback options in UI
@@ -488,11 +499,21 @@ function updatePlaybackOptionsUI() {
     if (elements.pausingResetsSpeed) {
         elements.pausingResetsSpeed.checked = currentSettings.pausingResetsSpeed || false;
     }
+    if (elements.skipSilenceEnabled) {
+        elements.skipSilenceEnabled.checked = currentSettings.skipSilenceEnabled || false;
+    }
 }
 
 // Handle pausing resets speed checkbox change
 function handlePausingResetsSpeedChange(e) {
     const newSettings = { ...currentSettings, pausingResetsSpeed: e.target.checked };
+    currentSettings = newSettings;
+    debouncedSave(newSettings);
+}
+
+// Handle skip silence enabled checkbox change
+function handleSkipSilenceEnabledChange(e) {
+    const newSettings = { ...currentSettings, skipSilenceEnabled: e.target.checked };
     currentSettings = newSettings;
     debouncedSave(newSettings);
 }
@@ -613,7 +634,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         debug('Storage changed:', changes);
 
         // Reload settings if they changed elsewhere
-        if (changes.customSpeeds || changes.shortcuts || changes.pausingResetsSpeed) {
+        if (changes.customSpeeds || changes.shortcuts || changes.pausingResetsSpeed || changes.skipSilenceEnabled || changes.skipSilenceGapThreshold) {
             loadSettings().then((settings) => {
                 currentSettings = settings;
                 renderSpeeds();
@@ -638,7 +659,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             shortcutSpeedUp: document.getElementById('shortcutSpeedUp'),
             shortcutSpeedDown: document.getElementById('shortcutSpeedDown'),
             shortcutReset: document.getElementById('shortcutReset'),
-            pausingResetsSpeed: document.getElementById('pausingResetsSpeed')
+            shortcutSkipSilence: document.getElementById('shortcutSkipSilence'),
+            pausingResetsSpeed: document.getElementById('pausingResetsSpeed'),
+            skipSilenceEnabled: document.getElementById('skipSilenceEnabled')
         };
 
         // Load settings
@@ -680,10 +703,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.shortcutReset.addEventListener('keydown', handleShortcutKeydown);
             elements.shortcutReset.addEventListener('input', handleShortcutInput);
         }
+        if (elements.shortcutSkipSilence) {
+            elements.shortcutSkipSilence.addEventListener('keydown', handleShortcutKeydown);
+            elements.shortcutSkipSilence.addEventListener('input', handleShortcutInput);
+        }
 
         // Playback options
         if (elements.pausingResetsSpeed) {
             elements.pausingResetsSpeed.addEventListener('change', handlePausingResetsSpeedChange);
+        }
+
+        // Skip silence options
+        if (elements.skipSilenceEnabled) {
+            elements.skipSilenceEnabled.addEventListener('change', handleSkipSilenceEnabledChange);
         }
 
         debug('Popup initialized successfully');

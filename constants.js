@@ -8,12 +8,15 @@ const DEFAULT_SETTINGS = {
     shortcuts: {
         speedUp: 'd',
         speedDown: 'a',
-        reset: 's'
+        reset: 's',
+        skipSilence: 'g'
     },
     enableNumberShortcuts: true,
     showSpeedButtons: true,
     showShortcutHints: true,
-    pausingResetsSpeed: false
+    pausingResetsSpeed: false,
+    skipSilenceEnabled: false,
+    skipSilenceGapThreshold: 5
 };
 
 // Export for use in content scripts and popup

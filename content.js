@@ -1,3 +1,241 @@
+// Caption extraction and silence skipping utilities
+class CaptionExtractor {
+    constructor(video) {
+        this.video = video;
+    }
+
+    extractCues() {
+        const cues = [];
+
+        if (!this.video || !this.video.textTracks) {
+            return cues;
+        }
+
+        // Iterate through all text tracks
+        for (let i = 0; i < this.video.textTracks.length; i++) {
+            const track = this.video.textTracks[i];
+
+            // Only process caption/subtitle tracks
+            if (track.kind === 'captions' || track.kind === 'subtitles') {
+                // Enable disabled tracks to access cues
+                if (track.mode === 'disabled') {
+                    track.mode = 'hidden';
+                }
+
+                if (track.cues) {
+                    for (let j = 0; j < track.cues.length; j++) {
+                        const cue = track.cues[j];
+                        cues.push({
+                            startTime: cue.startTime,
+                            endTime: cue.endTime || cue.startTime + 5, // Default 5s if no endTime
+                            text: cue.text || ''
+                        });
+                    }
+                }
+            }
+        }
+
+        // Sort by start time and remove duplicates
+        cues.sort((a, b) => a.startTime - b.startTime);
+
+        // Merge overlapping cues
+        const mergedCues = [];
+        for (const cue of cues) {
+            if (mergedCues.length === 0) {
+                mergedCues.push(cue);
+            } else {
+                const last = mergedCues[mergedCues.length - 1];
+                if (cue.startTime <= last.endTime) {
+                    // Overlapping - extend the end time
+                    last.endTime = Math.max(last.endTime, cue.endTime);
+                } else {
+                    mergedCues.push(cue);
+                }
+            }
+        }
+
+        return mergedCues;
+    }
+
+    hasCaptions() {
+        if (!this.video || !this.video.textTracks) {
+            console.log('[VSC] No video or textTracks');
+            return false;
+        }
+
+        console.log('[VSC] Checking', this.video.textTracks.length, 'text tracks');
+
+        for (let i = 0; i < this.video.textTracks.length; i++) {
+            const track = this.video.textTracks[i];
+            console.log('[VSC] Track', i, '- kind:', track.kind, 'mode:', track.mode, 'cues:', track.cues?.length || 0);
+
+            // Check tracks that are captions or subtitles
+            if (track.kind === 'captions' || track.kind === 'subtitles') {
+                // If track is disabled, try enabling it temporarily to load cues
+                const wasDisabled = track.mode === 'disabled';
+                if (wasDisabled) {
+                    track.mode = 'hidden'; // Enable but don't show (we render our own skip)
+                    console.log('[VSC] Enabled disabled track', i);
+                }
+
+                if (track.cues && track.cues.length > 0) {
+                    console.log('[VSC] Found captions in track', i, 'with', track.cues.length, 'cues');
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+}
+
+class SilenceSkipper {
+    constructor(controller) {
+        this.controller = controller;
+        this.enabled = false;
+        this.gaps = [];
+        this.timeUpdateHandler = null;
+        this.video = null;
+        this.gapThreshold = 5; // seconds
+        this.lastSkipTime = 0; // Prevent rapid repeated skips
+        this.skipCooldown = 0.5; // seconds between skips
+    }
+
+    computeGaps(cues, videoDuration) {
+        const gaps = [];
+
+        if (!cues || cues.length === 0) {
+            return gaps;
+        }
+
+        // Check gap at start of video
+        if (cues[0].startTime > this.gapThreshold) {
+            gaps.push({
+                start: 0,
+                end: cues[0].startTime
+            });
+        }
+
+        // Check gaps between cues
+        for (let i = 0; i < cues.length - 1; i++) {
+            const gapStart = cues[i].endTime;
+            const gapEnd = cues[i + 1].startTime;
+            const gapDuration = gapEnd - gapStart;
+
+            if (gapDuration > this.gapThreshold) {
+                gaps.push({
+                    start: gapStart,
+                    end: gapEnd
+                });
+            }
+        }
+
+        // Check gap at end of video (only if we know the duration)
+        if (videoDuration && cues.length > 0) {
+            const lastCueEnd = cues[cues.length - 1].endTime;
+            if (videoDuration - lastCueEnd > this.gapThreshold) {
+                gaps.push({
+                    start: lastCueEnd,
+                    end: videoDuration
+                });
+            }
+        }
+
+        return gaps;
+    }
+
+    toggle(video) {
+        if (this.enabled) {
+            this.disable();
+            return { enabled: false, message: 'Skip Silence: Off' };
+        } else {
+            return this.enable(video);
+        }
+    }
+
+    enable(video) {
+        if (!video) {
+            return { enabled: false, message: 'No video found' };
+        }
+
+        this.video = video;
+        const extractor = new CaptionExtractor(video);
+
+        if (!extractor.hasCaptions()) {
+            return { enabled: false, message: 'No captions available', unavailable: true };
+        }
+
+        const cues = extractor.extractCues();
+        if (cues.length === 0) {
+            return { enabled: false, message: 'No captions available', unavailable: true };
+        }
+
+        // Get gap threshold from settings
+        if (this.controller.settings && this.controller.settings.skipSilenceGapThreshold) {
+            this.gapThreshold = this.controller.settings.skipSilenceGapThreshold;
+        }
+
+        this.gaps = this.computeGaps(cues, video.duration);
+
+        if (this.gaps.length === 0) {
+            return { enabled: false, message: 'No gaps to skip' };
+        }
+
+        // Set up timeupdate listener
+        this.timeUpdateHandler = () => this.onTimeUpdate();
+        video.addEventListener('timeupdate', this.timeUpdateHandler);
+
+        this.enabled = true;
+        return { enabled: true, message: 'Skip Silence: On', gapCount: this.gaps.length };
+    }
+
+    disable() {
+        if (this.video && this.timeUpdateHandler) {
+            this.video.removeEventListener('timeupdate', this.timeUpdateHandler);
+        }
+        this.enabled = false;
+        this.gaps = [];
+        this.video = null;
+        this.timeUpdateHandler = null;
+    }
+
+    onTimeUpdate() {
+        if (!this.enabled || !this.video) return;
+
+        const currentTime = this.video.currentTime;
+        const now = Date.now() / 1000;
+
+        // Cooldown to prevent rapid skips
+        if (now - this.lastSkipTime < this.skipCooldown) {
+            return;
+        }
+
+        // Check if current time is in a gap
+        for (const gap of this.gaps) {
+            // Add small buffer (0.5s) to avoid skipping when user manually seeks into gap
+            if (currentTime >= gap.start + 0.5 && currentTime < gap.end - 0.5) {
+                const skipDuration = gap.end - currentTime;
+                this.video.currentTime = gap.end;
+                this.lastSkipTime = now;
+
+                // Show skip indicator
+                if (this.controller) {
+                    this.controller.showSkipIndicator(skipDuration);
+                }
+                break;
+            }
+        }
+    }
+
+    isInGap(time) {
+        for (const gap of this.gaps) {
+            if (time >= gap.start && time < gap.end) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
 class VideoSpeedController {
     constructor() {
         this.defaultSpeeds = DEFAULT_SPEEDS;
@@ -12,6 +250,7 @@ class VideoSpeedController {
         this.currentVideo = null;
         this.controlsTimeout = null;
         this.isMouseOverVideo = false;
+        this.isMouseOverControls = false;
         this.isLongPressing = false;
         this.speedBeforeLongPress = null;
         this.longPressStartTime = null;
@@ -21,6 +260,9 @@ class VideoSpeedController {
         this.eventListeners = [];
         this.storageListeners = [];
         this.videoCheckInterval = null;
+
+        // Skip silence feature
+        this.silenceSkipper = new SilenceSkipper(this);
 
         this.loadSettings();
         this.setupEventListeners();
@@ -50,8 +292,24 @@ class VideoSpeedController {
             <button class="speed-up">
                 <span class="icon">+</span>
             </button>
+            <button class="skip-silence" title="Skip sections without captions">
+                <span class="icon">⏭</span>
+            </button>
+            <button class="settings" title="Settings">
+                <span class="icon">⚙</span>
+            </button>
         `;
         document.body.appendChild(controls);
+
+        // Keep controls visible when hovering over them
+        controls.addEventListener('mouseenter', () => {
+            this.isMouseOverControls = true;
+            this.resetControlsTimer();
+        });
+        controls.addEventListener('mouseleave', () => {
+            this.isMouseOverControls = false;
+        });
+
         return controls;
     }
 
@@ -336,17 +594,22 @@ class VideoSpeedController {
             const speedDownBtn = getButton('.speed-down');
             const resetBtn = getButton('.speed-reset');
             const speedUpBtn = getButton('.speed-up');
+            const skipSilenceBtn = getButton('.skip-silence');
+            const settingsBtn = getButton('.settings');
 
             // Update tooltips with keyboard shortcuts
             if (this.settings.showShortcutHints) {
                 if (speedDownBtn) speedDownBtn.title = `Decrease speed [${formatShortcut(this.settings.shortcuts.speedDown)}]`;
                 if (resetBtn) resetBtn.title = `Reset to normal speed [${formatShortcut(this.settings.shortcuts.reset)}]`;
                 if (speedUpBtn) speedUpBtn.title = `Increase speed [${formatShortcut(this.settings.shortcuts.speedUp)}]`;
+                if (skipSilenceBtn) skipSilenceBtn.title = `Skip sections without captions [${formatShortcut(this.settings.shortcuts.skipSilence)}]`;
             } else {
                 if (speedDownBtn) speedDownBtn.title = 'Decrease speed';
                 if (resetBtn) resetBtn.title = 'Reset to normal speed';
                 if (speedUpBtn) speedUpBtn.title = 'Increase speed';
+                if (skipSilenceBtn) skipSilenceBtn.title = 'Skip sections without captions';
             }
+            if (settingsBtn) settingsBtn.title = 'Settings';
         } catch (error) {
             console.error('Error updating shortcut hints:', error);
         }
@@ -432,10 +695,20 @@ class VideoSpeedController {
                 this.hideControls();
             };
 
+            // Debounced mouse move - only reset hide timer, don't re-show if already visible
+            let mouseMoveTimeout = null;
             const mouseMoveHandler = () => {
-                if (this.isMouseOverVideo) {
-                    this.showControls();
-                }
+                if (!this.isMouseOverVideo) return;
+
+                // Debounce: ignore rapid movements
+                if (mouseMoveTimeout) return;
+
+                mouseMoveTimeout = setTimeout(() => {
+                    mouseMoveTimeout = null;
+                }, 100);
+
+                // Just reset the hide timer if controls are already visible
+                this.resetControlsTimer();
             };
 
             video.addEventListener('mouseenter', mouseEnterHandler);
@@ -458,45 +731,63 @@ class VideoSpeedController {
     showControls() {
         try {
             if (!this.controls || !this.currentVideo) return;
-            
+
+            // Only update DOM if not already visible
+            const isVisible = this.controls.style.opacity === '1';
+            if (!isVisible) {
+                this.controls.style.opacity = '1';
+                this.controls.style.display = 'flex';
+            }
+
+            // Reset the hide timer
+            this.resetControlsTimer();
+        } catch (error) {
+            console.error('Error showing controls:', error);
+        }
+    }
+
+    resetControlsTimer() {
+        try {
             // Clear any existing hide timeout
             if (this.controlsTimeout) {
                 clearTimeout(this.controlsTimeout);
                 this.controlsTimeout = null;
             }
-            
-            // Show controls
-            this.controls.style.opacity = '1';
-            this.controls.style.display = 'flex';
-            
+
             // Set timeout to hide controls after 2 seconds
             this.controlsTimeout = setTimeout(() => {
                 this.hideControls();
             }, 2000);
-            
+
             // Track timeout for cleanup
             this.timeouts.push(this.controlsTimeout);
         } catch (error) {
-            console.error('Error showing controls:', error);
+            console.error('Error resetting controls timer:', error);
         }
     }
 
     hideControls() {
         try {
             if (!this.controls) return;
-            
+
+            // Don't hide if mouse is over controls
+            if (this.isMouseOverControls) {
+                this.resetControlsTimer();
+                return;
+            }
+
             // Clear any existing timeout
             if (this.controlsTimeout) {
                 clearTimeout(this.controlsTimeout);
                 this.controlsTimeout = null;
             }
-            
+
             // Hide controls with fade
             this.controls.style.opacity = '0';
-            
+
             // Hide completely after fade animation
             setTimeout(() => {
-                if (this.controls && !this.isMouseOverVideo) {
+                if (this.controls && !this.isMouseOverVideo && !this.isMouseOverControls) {
                     this.controls.style.display = 'none';
                 }
             }, 300);
@@ -692,6 +983,9 @@ class VideoSpeedController {
                             this.startLongPress(video);
                         }
                         actionTaken = true;
+                    } else if (matchesShortcut(key, this.settings.shortcuts.skipSilence)) {
+                        this.toggleSkipSilence(video);
+                        actionTaken = true;
                     }
 
                     // Show controls when any speed shortcut is used
@@ -766,6 +1060,27 @@ class VideoSpeedController {
                     }
                 };
                 addSafeListener(resetBtn, 'click', resetHandler);
+            }
+
+            const skipSilenceBtn = getButton('.skip-silence');
+            if (skipSilenceBtn) {
+                const skipSilenceHandler = () => {
+                    try {
+                        const video = getCurrentVideo();
+                        if (video) this.toggleSkipSilence(video);
+                    } catch (clickError) {
+                        console.error('Error in skip silence click handler:', clickError);
+                    }
+                };
+                addSafeListener(skipSilenceBtn, 'click', skipSilenceHandler);
+            }
+
+            const settingsBtn = getButton('.settings');
+            if (settingsBtn) {
+                const settingsHandler = () => {
+                    chrome.runtime.sendMessage({ action: 'openSidePanel' });
+                };
+                addSafeListener(settingsBtn, 'click', settingsHandler);
             }
 
             // Listen for settings updates
@@ -973,6 +1288,112 @@ class VideoSpeedController {
         }
     };
 
+    showSkipIndicator(skipDuration) {
+        const seconds = Math.round(skipDuration);
+        this.showOverlayMessage(`Skipped ${seconds}s`);
+    }
+
+    showOverlayMessage(message) {
+        try {
+            if (!this.overlay) {
+                console.error('Overlay element not found');
+                return;
+            }
+
+            // Get current video to position overlay over it
+            const getCurrentVideo = () => {
+                const videos = Array.from(document.querySelectorAll('video'))
+                    .filter(video => video.isConnected &&
+                           (video.src || video.currentSrc) &&
+                           video.readyState !== HTMLMediaElement.HAVE_NOTHING);
+
+                const playingVideo = videos.find(video => !video.paused);
+                if (playingVideo) return playingVideo;
+
+                const largestVideo = videos.reduce((largest, video) => {
+                    const videoArea = video.offsetWidth * video.offsetHeight;
+                    const largestArea = largest ? largest.offsetWidth * largest.offsetHeight : 0;
+                    return videoArea > largestArea ? video : largest;
+                }, null);
+
+                return largestVideo || videos[0] || null;
+            };
+
+            const video = getCurrentVideo();
+            if (!video) {
+                console.warn('No video found for overlay positioning');
+                return;
+            }
+
+            // Position overlay over the video
+            const videoRect = video.getBoundingClientRect();
+            this.overlay.style.position = 'fixed';
+            this.overlay.style.top = `${videoRect.top + videoRect.height / 2}px`;
+            this.overlay.style.left = `${videoRect.left + videoRect.width / 2}px`;
+            this.overlay.style.transform = 'translate(-50%, -50%)';
+
+            this.overlay.textContent = message;
+            this.overlay.style.display = 'block';
+            this.overlay.style.opacity = '1';
+
+            // Clear any existing timeouts
+            this.clearTimeouts();
+
+            // Create new timeouts and track them
+            this.fadeTimeout = setTimeout(() => {
+                try {
+                    if (this.overlay) {
+                        this.overlay.style.opacity = '0';
+                        this.hideTimeout = setTimeout(() => {
+                            try {
+                                if (this.overlay) {
+                                    this.overlay.style.display = 'none';
+                                }
+                            } catch (hideError) {
+                                console.error('Error hiding overlay:', hideError);
+                            }
+                        }, 1000);
+                        this.timeouts.push(this.hideTimeout);
+                    }
+                } catch (fadeError) {
+                    console.error('Error fading overlay:', fadeError);
+                }
+            }, 1000);
+            this.timeouts.push(this.fadeTimeout);
+        } catch (error) {
+            console.error('Error in showOverlayMessage:', error);
+        }
+    }
+
+    toggleSkipSilence(video) {
+        if (!video) {
+            console.error('No video element provided to toggleSkipSilence');
+            return;
+        }
+
+        const result = this.silenceSkipper.toggle(video);
+        this.showOverlayMessage(result.message);
+        this.updateSkipSilenceButton(result.enabled, result.unavailable);
+
+        return result;
+    }
+
+    updateSkipSilenceButton(enabled, unavailable = false) {
+        const skipBtn = this.controls?.querySelector('.skip-silence');
+        if (!skipBtn) return;
+
+        skipBtn.classList.toggle('active', enabled);
+        skipBtn.classList.toggle('unavailable', unavailable);
+
+        if (unavailable) {
+            skipBtn.title = 'No captions available';
+        } else if (enabled) {
+            skipBtn.title = 'Skip Silence: On';
+        } else {
+            skipBtn.title = 'Skip sections without captions';
+        }
+    }
+
     // Resource cleanup methods
     clearTimeouts() {
         if (this.fadeTimeout) {
@@ -1160,6 +1581,11 @@ class VideoSpeedController {
             this.removeEventListeners();
             this.removeDOMElements();
 
+            // Disable silence skipper
+            if (this.silenceSkipper) {
+                this.silenceSkipper.disable();
+            }
+
             // Clear video detection interval
             if (this.videoCheckInterval) {
                 clearInterval(this.videoCheckInterval);
@@ -1235,10 +1661,13 @@ class VideoSpeedController {
                 if (!this.settings.shortcuts || typeof this.settings.shortcuts !== 'object') {
                     errors.push('Shortcuts is not a valid object');
                 } else {
-                    const requiredKeys = ['speedUp', 'speedDown', 'reset'];
+                    const requiredKeys = ['speedUp', 'speedDown', 'reset', 'skipSilence'];
                     for (const key of requiredKeys) {
                         if (!(key in this.settings.shortcuts)) {
-                            errors.push(`Missing shortcut: ${key}`);
+                            // skipSilence is optional for backwards compatibility
+                            if (key !== 'skipSilence') {
+                                errors.push(`Missing shortcut: ${key}`);
+                            }
                         } else if (typeof this.settings.shortcuts[key] !== 'string' || this.settings.shortcuts[key].length === 0) {
                             errors.push(`Invalid shortcut for ${key}`);
                         }

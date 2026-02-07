@@ -49,3 +49,21 @@
 .video-speed-controls .icon {
     font-weight: bold;
 }
+
+.video-speed-controls .skip-silence.active {
+    background: rgba(76, 175, 80, 0.6);
+    border-color: rgba(76, 175, 80, 0.8);
+}
+
+.video-speed-controls .skip-silence.active:hover {
+    background: rgba(76, 175, 80, 0.8);
+}
+
+.video-speed-controls .skip-silence.unavailable {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.video-speed-controls .skip-silence.unavailable:hover {
+    background: transparent;
+}
