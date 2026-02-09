@@ -1,1 +1,0 @@
-Video Speed Controller: YouTube assigns its own speed-up/slow down functionality to the < (⇧,) and > (⇧.) keys. We should acquire these keys for our speed-up/slow down functionality. This will mean that these two keys will now increment through the users full list of speeds
