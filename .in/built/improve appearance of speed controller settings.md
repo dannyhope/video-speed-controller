@@ -1,6 +1,8 @@
 # Improve Appearance Of Speed Controller Settings
 
+**Readiness:** built
 Dropped: 2026-02-05 16:41
+**Merged into:** `.in/auto-refined/improve appearance of video speed controller settings and all browser extensions.md`
 
 ![Improve Appearance Of Speed Controller Settings](improve appearance of speed controller settings.png)
 

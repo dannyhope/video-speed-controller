@@ -1,5 +1,6 @@
 # Skip sections with no captions
 
+**Readiness:** built
 **Refined:** 2026-01-31
 
 ## Summary

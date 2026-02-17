@@ -1,5 +1,7 @@
 # Add settings button to on-screen controls
 
+**Readiness:** built
+
 ## Summary
 Add a button to the on-screen speed controls that opens extension settings in a Chrome side panel.
 
