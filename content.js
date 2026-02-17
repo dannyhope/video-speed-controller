@@ -264,6 +264,10 @@ class VideoSpeedController {
         // Skip silence feature
         this.silenceSkipper = new SilenceSkipper(this);
 
+        // YouTube embed controller
+        this.youtubeEmbedController = new YouTubeEmbedController();
+        this.youtubeEmbedController.init();
+
         this.loadSettings();
         this.setupEventListeners();
         this.setupCleanupHandlers();
@@ -655,6 +659,16 @@ class VideoSpeedController {
                 this.setupVideoMouseListeners(playingVideo);
                 // Start with controls hidden, they'll show on mouse movement
                 this.hideControls();
+            } else if (this.youtubeEmbedController && this.youtubeEmbedController.hasEmbeds()) {
+                // No direct video, but YouTube embeds exist — position controls over embed
+                const iframe = this.youtubeEmbedController.getActiveIframe();
+                if (iframe) {
+                    this.positionControlsInsideIframe(iframe);
+                    this.setupIframeMouseListeners(iframe);
+                    this.hideControls();
+                } else {
+                    this.controls.style.display = 'none';
+                }
             } else {
                 this.controls.style.display = 'none';
                 this.currentVideo = null;
@@ -678,6 +692,63 @@ class VideoSpeedController {
             this.controls.style.display = 'flex';
         } catch (error) {
             console.error('Error positioning controls inside video:', error);
+        }
+    }
+
+    positionControlsInsideIframe(iframe) {
+        try {
+            if (!iframe || !this.controls) return;
+
+            const iframeRect = iframe.getBoundingClientRect();
+            const padding = 10;
+            this.controls.style.position = 'fixed';
+            this.controls.style.top = `${iframeRect.top + padding}px`;
+            this.controls.style.left = `${iframeRect.left + padding}px`;
+            this.controls.style.display = 'flex';
+        } catch (error) {
+            console.error('Error positioning controls inside iframe:', error);
+        }
+    }
+
+    setupIframeMouseListeners(iframe) {
+        try {
+            if (!iframe || iframe._vscMouseListenersAdded) return;
+
+            const mouseEnterHandler = () => {
+                this.isMouseOverVideo = true;
+                this.showControls();
+            };
+
+            const mouseLeaveHandler = () => {
+                this.isMouseOverVideo = false;
+                this.hideControls();
+            };
+
+            let mouseMoveTimeout = null;
+            const mouseMoveHandler = () => {
+                if (!this.isMouseOverVideo) return;
+                if (mouseMoveTimeout) return;
+
+                mouseMoveTimeout = setTimeout(() => {
+                    mouseMoveTimeout = null;
+                }, 100);
+
+                this.resetControlsTimer();
+            };
+
+            iframe.addEventListener('mouseenter', mouseEnterHandler);
+            iframe.addEventListener('mouseleave', mouseLeaveHandler);
+            iframe.addEventListener('mousemove', mouseMoveHandler);
+
+            iframe._vscMouseListenersAdded = true;
+
+            this.eventListeners.push(
+                { element: iframe, event: 'mouseenter', handler: mouseEnterHandler },
+                { element: iframe, event: 'mouseleave', handler: mouseLeaveHandler },
+                { element: iframe, event: 'mousemove', handler: mouseMoveHandler }
+            );
+        } catch (error) {
+            console.error('Error setting up iframe mouse listeners:', error);
         }
     }
 
@@ -730,7 +801,8 @@ class VideoSpeedController {
 
     showControls() {
         try {
-            if (!this.controls || !this.currentVideo) return;
+            const hasEmbed = this.youtubeEmbedController && this.youtubeEmbedController.hasEmbeds();
+            if (!this.controls || (!this.currentVideo && !hasEmbed)) return;
 
             // Only update DOM if not already visible
             const isVisible = this.controls.style.opacity === '1';
@@ -894,6 +966,91 @@ class VideoSpeedController {
         }
     }
 
+    // YouTube embed speed control methods
+    changeEmbedSpeed(direction) {
+        try {
+            this.currentSpeedIndex = Math.max(0, Math.min(this.speeds.length - 1, this.currentSpeedIndex + direction));
+            const newSpeed = this.speeds[this.currentSpeedIndex];
+
+            if (newSpeed !== 1) {
+                this.lastSpeedIndex = this.currentSpeedIndex;
+            }
+
+            this.youtubeEmbedController.setPlaybackRate(newSpeed);
+            this.showEmbedSpeedIndicator(newSpeed);
+        } catch (error) {
+            console.error('[VSC] Error changing embed speed:', error);
+        }
+    }
+
+    resetEmbedSpeed() {
+        try {
+            const normalSpeedIndex = this.speeds.indexOf(1);
+
+            if (this.currentSpeedIndex === normalSpeedIndex) {
+                if (this.lastSpeedIndex !== undefined && this.lastSpeedIndex !== normalSpeedIndex) {
+                    this.currentSpeedIndex = this.lastSpeedIndex;
+                } else {
+                    this.currentSpeedIndex = normalSpeedIndex;
+                }
+            } else {
+                this.lastSpeedIndex = this.currentSpeedIndex;
+                this.currentSpeedIndex = normalSpeedIndex;
+            }
+
+            const newSpeed = this.speeds[this.currentSpeedIndex];
+            this.youtubeEmbedController.setPlaybackRate(newSpeed);
+            this.showEmbedSpeedIndicator(newSpeed);
+        } catch (error) {
+            console.error('[VSC] Error resetting embed speed:', error);
+        }
+    }
+
+    showEmbedSpeedIndicator(speed) {
+        try {
+            if (!this.overlay) return;
+
+            const iframe = this.youtubeEmbedController.getActiveIframe();
+            if (!iframe) return;
+
+            const iframeRect = iframe.getBoundingClientRect();
+            this.overlay.style.position = 'fixed';
+            this.overlay.style.top = `${iframeRect.top + iframeRect.height / 2}px`;
+            this.overlay.style.left = `${iframeRect.left + iframeRect.width / 2}px`;
+            this.overlay.style.transform = 'translate(-50%, -50%)';
+
+            const speedText = speed === 1 ? 'Normal speed' : `${speed}\u00d7`;
+            this.overlay.textContent = speedText;
+            this.overlay.style.display = 'block';
+            this.overlay.style.opacity = '1';
+
+            this.clearTimeouts();
+
+            this.fadeTimeout = setTimeout(() => {
+                try {
+                    if (this.overlay) {
+                        this.overlay.style.opacity = '0';
+                        this.hideTimeout = setTimeout(() => {
+                            try {
+                                if (this.overlay) {
+                                    this.overlay.style.display = 'none';
+                                }
+                            } catch (hideError) {
+                                console.error('Error hiding overlay:', hideError);
+                            }
+                        }, 1000);
+                        this.timeouts.push(this.hideTimeout);
+                    }
+                } catch (fadeError) {
+                    console.error('Error fading overlay:', fadeError);
+                }
+            }, 1000);
+            this.timeouts.push(this.fadeTimeout);
+        } catch (error) {
+            console.error('[VSC] Error showing embed speed indicator:', error);
+        }
+    }
+
     setupEventListeners() {
         try {
             // Import event manager utilities (inline for now)
@@ -966,10 +1123,29 @@ class VideoSpeedController {
                     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
                     const video = getCurrentVideo();
-                    if (!video) return;
-
                     const key = e.key.toLowerCase();
                     let actionTaken = false;
+
+                    // If no direct video found, try YouTube embeds
+                    if (!video && this.youtubeEmbedController.hasEmbeds()) {
+                        if (matchesShortcut(key, this.settings.shortcuts.speedUp)) {
+                            this.changeEmbedSpeed(1);
+                            actionTaken = true;
+                        } else if (matchesShortcut(key, this.settings.shortcuts.speedDown)) {
+                            this.changeEmbedSpeed(-1);
+                            actionTaken = true;
+                        } else if (matchesShortcut(key, this.settings.shortcuts.reset)) {
+                            this.resetEmbedSpeed();
+                            actionTaken = true;
+                        }
+
+                        if (actionTaken) {
+                            this.showControls();
+                        }
+                        return;
+                    }
+
+                    if (!video) return;
 
                     if (matchesShortcut(key, this.settings.shortcuts.speedUp)) {
                         this.changeSpeed(video, 1);
@@ -1030,7 +1206,11 @@ class VideoSpeedController {
                 const speedDownHandler = () => {
                     try {
                         const video = getCurrentVideo();
-                        if (video) this.changeSpeed(video, -1);
+                        if (video) {
+                            this.changeSpeed(video, -1);
+                        } else if (this.youtubeEmbedController.hasEmbeds()) {
+                            this.changeEmbedSpeed(-1);
+                        }
                     } catch (clickError) {
                         console.error('Error in speed down click handler:', clickError);
                     }
@@ -1042,7 +1222,11 @@ class VideoSpeedController {
                 const speedUpHandler = () => {
                     try {
                         const video = getCurrentVideo();
-                        if (video) this.changeSpeed(video, 1);
+                        if (video) {
+                            this.changeSpeed(video, 1);
+                        } else if (this.youtubeEmbedController.hasEmbeds()) {
+                            this.changeEmbedSpeed(1);
+                        }
                     } catch (clickError) {
                         console.error('Error in speed up click handler:', clickError);
                     }
@@ -1054,7 +1238,11 @@ class VideoSpeedController {
                 const resetHandler = () => {
                     try {
                         const video = getCurrentVideo();
-                        if (video) this.resetSpeed(video);
+                        if (video) {
+                            this.resetSpeed(video);
+                        } else if (this.youtubeEmbedController.hasEmbeds()) {
+                            this.resetEmbedSpeed();
+                        }
                     } catch (clickError) {
                         console.error('Error in reset click handler:', clickError);
                     }
@@ -1470,22 +1658,23 @@ class VideoSpeedController {
             this.updateControlsVisibilityBasedOnVideo();
         }, 1000); // Check every second for responsiveness
 
-        // Set up a MutationObserver to detect when videos are added/removed
+        // Set up a MutationObserver to detect when videos or iframes are added/removed
         const observer = new MutationObserver((mutations) => {
-            // Check if any video elements were added
-            let videoAdded = false;
+            // Check if any video or iframe elements were added
+            let mediaAdded = false;
             for (const mutation of mutations) {
                 if (mutation.addedNodes.length > 0) {
                     mutation.addedNodes.forEach(node => {
-                        if (node.nodeName === 'VIDEO' || (node.querySelectorAll && node.querySelectorAll('video').length > 0)) {
-                            videoAdded = true;
+                        if (node.nodeName === 'VIDEO' || node.nodeName === 'IFRAME' ||
+                            (node.querySelectorAll && (node.querySelectorAll('video').length > 0 || node.querySelectorAll('iframe').length > 0))) {
+                            mediaAdded = true;
                         }
                     });
                 }
             }
 
-            if (videoAdded) {
-                // Wait a bit for video to initialize then check
+            if (mediaAdded) {
+                // Wait a bit for video/iframe to initialize then check
                 setTimeout(() => this.updateControlsVisibilityBasedOnVideo(), 100);
             } else {
                 this.updateControlsVisibilityBasedOnVideo();
@@ -1584,6 +1773,11 @@ class VideoSpeedController {
             // Disable silence skipper
             if (this.silenceSkipper) {
                 this.silenceSkipper.disable();
+            }
+
+            // Clean up YouTube embed controller
+            if (this.youtubeEmbedController) {
+                this.youtubeEmbedController.cleanup();
             }
 
             // Clear video detection interval

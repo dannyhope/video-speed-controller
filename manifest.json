@@ -35,7 +35,7 @@
     {
       "matches": ["<all_urls>"],
       "css": ["styles.css"],
-      "js": ["constants.js", "content.js"]
+      "js": ["constants.js", "youtube-embed.js", "content.js"]
     }
   ],
   "icons": {
