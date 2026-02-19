@@ -1,6 +1,6 @@
 # Fix speed controls for embedded YouTube videos
 
-**Readiness:** refined
+**Readiness:** built
 **Refined:** 2026-02-17
 **Done when:** Keyboard shortcuts and on-screen speed controls work on YouTube videos embedded via `<iframe>` on third-party sites (blogs, news sites, etc.), using the YouTube IFrame Player API
 
