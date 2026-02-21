@@ -1,7 +1,9 @@
 # Feature: Add keyboard shortcut discovery (help overlay)
 
-**Readiness:** unrefined
+**Readiness:** refined
 **Roadmap:** next
+**Skipped human refinement:** 2026-02-21
+**Done when:** Pressing `?` (or clicking a help button in the on-screen controls) shows an overlay listing all current keyboard shortcuts; overlay dismisses on Escape or outside click; works in iframes
 
 ## Issue
 Users can configure shortcuts but can't discover what the current shortcuts are while using the extension. They must return to settings to check.
