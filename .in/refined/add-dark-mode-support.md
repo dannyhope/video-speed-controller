@@ -1,7 +1,9 @@
 # Feature: Add dark mode / system theme support
 
-**Readiness:** unrefined
+**Readiness:** refined
 **Roadmap:** next
+**Skipped human refinement:** 2026-02-21
+**Done when:** Extension renders correctly in system dark mode; popup has a System/Light/Dark theme selector; preference persists via chrome.storage.sync; all hardcoded colours replaced with CSS variables responding to `prefers-color-scheme`
 
 ## Issue
 The extension uses hardcoded colours that don't adapt to system dark mode. On macOS/Windows in dark mode, white text on light backgrounds is unreadable.
