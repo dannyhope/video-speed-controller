@@ -820,6 +820,9 @@ class VideoSpeedController {
 
     resetControlsTimer() {
         try {
+            // Don't set hide timeout if pointer is over video - keep controls visible
+            if (this.isMouseOverVideo) return;
+
             // Clear any existing hide timeout
             if (this.controlsTimeout) {
                 clearTimeout(this.controlsTimeout);
