@@ -1,7 +1,9 @@
 # Fix: Increase touch target sizes on on-screen controls
 
-**Readiness:** unrefined
+**Readiness:** refined
 **Roadmap:** now
+**Skipped human refinement:** 2026-02-21
+**Done when:** Control buttons in `.video-speed-controls` are at least 40×40px tap targets with padding ≥ 8px and font size ≥ 14px; layout fits at 375px viewport width without overlap
 
 ## Issue
 Control buttons have only 5px padding, making them ~30px—too small for accurate touch targeting on mobile (target minimum: 44×44px per WCAG).
