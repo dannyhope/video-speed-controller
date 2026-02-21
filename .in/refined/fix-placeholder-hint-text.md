@@ -1,7 +1,9 @@
 # Fix: Replace placeholder with visible hint text
 
-**Readiness:** unrefined
+**Readiness:** refined
 **Roadmap:** now
+**Skipped human refinement:** 2026-02-21
+**Done when:** The "Add speed" input in popup.html shows a permanent visible hint ("Add speed (0.05–16)") below or beside the input field; the placeholder attribute is removed; the hint remains visible while the user types
 
 ## Issue
 The "Add speed" input uses a placeholder instead of visible hint text. Placeholders disappear when focused, breaking accessibility.
