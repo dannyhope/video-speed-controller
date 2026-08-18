@@ -2,15 +2,7 @@
 
 Aligned with the **Store listing** form in the Developer Dashboard.
 
-## Title from package
-*(from `manifest.json` → `name` — not edited in the listing form)*
-
-Video Speed Controller
-
-## Summary from package
-*(from `manifest.json` → `description`)*
-
-Control video playback speed with customisable keyboard shortcuts
+Title and summary are filled automatically from the package (`manifest.json`) — not listed here.
 
 ## Description
 *(paste into Description — max 16,000 characters)*
