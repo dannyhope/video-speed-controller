@@ -2,10 +2,9 @@
   "manifest_version": 3,
   "name": "Video Speed Controller",
   "version": "1.0",
-  "description": "Control video playback speed with customizable keyboard shortcuts",
+  "description": "Control video playback speed with customisable keyboard shortcuts",
   "permissions": [
     "storage",
-    "activeTab",
     "sidePanel"
   ],
   "side_panel": {

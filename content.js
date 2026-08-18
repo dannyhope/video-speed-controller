@@ -414,14 +414,15 @@ class VideoSpeedController {
                 };
                 
                 const currentVersion = await getCurrentVersion();
+
+                const result = await new Promise(resolve => {
+                    safeStorageGet(null, resolve);
+                });
                 
                 if (currentVersion < CURRENT_SCHEMA_VERSION) {
                     console.log(`Migrating settings from version ${currentVersion} to ${CURRENT_SCHEMA_VERSION}`);
                     
-                    const result = await new Promise(resolve => {
-                        safeStorageGet(null, resolve);
-                    });
-                    let settings = result;
+                    let settings = result || {};
                     
                     // Migration from version 1 to 2
                     if (currentVersion === 1) {
@@ -434,12 +435,12 @@ class VideoSpeedController {
                                 .sort((a, b) => a - b);
                         }
                         
-                        // Validate shortcuts
+                        // Validate shortcuts (single key or comma-separated list)
                         if (settings.shortcuts && typeof settings.shortcuts === 'object') {
                             const validShortcuts = {};
-                            ['speedUp', 'speedDown', 'reset'].forEach(key => {
+                            ['speedUp', 'speedDown', 'reset', 'skipSilence'].forEach(key => {
                                 const value = settings.shortcuts[key];
-                                if (typeof value === 'string' && value.length === 1) {
+                                if (typeof value === 'string' && value.trim().length > 0) {
                                     validShortcuts[key] = value.toLowerCase();
                                 }
                             });
@@ -1124,6 +1125,7 @@ class VideoSpeedController {
             const keydownHandler = (e) => {
                 try {
                     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                    if (!this.settings?.shortcuts) return;
 
                     const video = getCurrentVideo();
                     const key = e.key.toLowerCase();
@@ -1180,6 +1182,7 @@ class VideoSpeedController {
             const keyupHandler = (e) => {
                 try {
                     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                    if (!this.settings?.shortcuts) return;
 
                     const key = e.key.toLowerCase();
 
@@ -1710,7 +1713,7 @@ class VideoSpeedController {
                 if (this.settings && this.settings.pausingResetsSpeed) {
                     video.playbackRate = 1.0;
                     this.currentSpeedIndex = this.speeds.indexOf(1);
-                    this.showOverlay('1×');
+                    this.showSpeedIndicator(1);
                 }
             };
 
