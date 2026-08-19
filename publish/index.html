@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>How to publish Video Speed Controller to Chrome Web Store</title>
+  <title>Publish Video Speed Controller to Chrome Web Store</title>
   <style>
     :root {
       --bg: #f4f5f7;
@@ -32,19 +32,21 @@
       line-height: 1.5;
     }
     header {
-      background: var(--card);
-      border-bottom: 1px solid var(--line);
-      padding: 1.5rem 1.25rem;
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      background: transparent;
+      border: 0;
+      padding: 1.5rem 1.25rem 0.75rem;
     }
-    header .inner, main, footer .inner {
-      max-width: 54rem;
+    header .inner, footer .inner {
+      max-width: 70rem;
       margin: 0 auto;
     }
-    h1 { font-size: 1.35rem; margin: 0 0 0.25rem; line-height: 1.3; }
-    .tagline { color: var(--muted); margin: 0; font-size: 0.95rem; }
+    h1 {
+      font-size: 1.35rem;
+      margin: 0;
+      line-height: 1.3;
+      color: var(--text);
+      font-weight: 600;
+    }
     a.btn, button.btn {
       display: inline-flex;
       align-items: center;
@@ -66,27 +68,7 @@
     }
     a.btn.primary:hover, button.btn.primary:hover { background: var(--accent-hover); }
     a.btn:hover, button.btn:hover { border-color: #c0c4c8; }
-    main { padding: 1.5rem 1.25rem 3rem; }
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.75rem 1rem;
-      margin-bottom: 1.25rem;
-      padding: 0.85rem 1rem;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      font-size: 0.9rem;
-    }
-    .toolbar label {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      cursor: pointer;
-      color: var(--muted);
-      user-select: none;
-    }
+    /* main padding set with layout-wrap */
     .privacy-alert {
       display: none;
       margin-bottom: 1.25rem;
@@ -100,73 +82,162 @@
     .privacy-alert.show { display: block; }
     .privacy-alert strong { display: block; margin-bottom: 0.25rem; }
     .privacy-alert a { color: var(--alert); font-weight: 600; }
-    .page-nav {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem 1rem;
-      margin-bottom: 1.25rem;
+    .layout-wrap {
+      display: grid;
+      grid-template-columns: 13.5rem minmax(0, 1fr);
+      align-items: start;
+      max-width: 70rem;
+      margin: 0 auto;
+      gap: 0;
+    }
+    header .inner {
+      max-width: 70rem;
+    }
+    .side-nav {
+      position: sticky;
+      top: 1rem;
+      padding: 1.5rem 0.75rem 2rem 1.25rem;
       font-size: 0.875rem;
     }
-    .page-nav a { color: var(--accent); text-decoration: none; }
-    .page-nav a:hover { text-decoration: underline; }
-    section.card {
+    .side-nav a {
+      display: block;
+      padding: 0.4rem 0.65rem;
+      margin: 0.1rem 0;
+      color: var(--accent);
+      text-decoration: none;
+      border-radius: 6px;
+      line-height: 1.35;
+    }
+    .side-nav a:hover { background: #e8eaed; }
+    .side-nav a.is-active {
+      background: #e8f0fe;
+      color: #1967d2;
+      font-weight: 500;
+    }
+    .side-nav a.is-empty {
+      color: #9aa0a6;
+      pointer-events: auto;
+    }
+    .side-nav a.is-empty:hover { background: #f1f3f4; }
+    main {
+      padding: 1.5rem 1.5rem 3rem;
+      min-width: 0;
       background: var(--card);
-      border: 1px solid var(--line);
       border-radius: 12px;
-      padding: 1.25rem 1.35rem;
-      margin-bottom: 1rem;
+      border: 1px solid var(--line);
+      margin: 1rem 1.25rem 2rem 0;
+    }
+    @media (max-width: 800px) {
+      .layout-wrap { grid-template-columns: 1fr; }
+      .side-nav {
+        position: static;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        padding: 1rem 1.25rem 0;
+      }
+      main { margin: 0.75rem 1.25rem 2rem; }
+    }
+    /* Sections are headings + tasks — not separate white cards */
+    section.card {
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      margin: 0 0 2.5rem;
+    }
+    section.card > h2 {
+      margin: 0 0 1rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text);
     }
     .step-head {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 1rem;
+      display: grid;
+      grid-template-columns: var(--tick-col, 1.25rem) minmax(0, 1fr);
+      column-gap: var(--tick-gap, 0.65rem);
+      align-items: start;
       margin-bottom: 0.5rem;
+      cursor: pointer;
     }
     .step-head h2,
     .step-head h3 {
       margin: 0;
-      flex: 1;
+      grid-column: 2;
     }
     .step-head h3 {
       font-size: 1rem;
       color: var(--text);
     }
+    .step-head > .done-toggle {
+      grid-column: 1;
+    }
+    .step-head > .field-label {
+      display: contents;
+    }
+    .step-head > .field-label > .done-toggle {
+      grid-column: 1;
+    }
+    .step-head > .field-label > :not(.done-toggle) {
+      grid-column: 2;
+    }
     .done-toggle {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
+      justify-content: center;
+      width: var(--tick-col, 1.25rem);
       flex-shrink: 0;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--muted);
+      margin-top: 0.15rem;
       cursor: pointer;
       user-select: none;
-      padding: 0.25rem 0.5rem;
-      border-radius: 6px;
-      border: 1px solid var(--line);
-      background: #fff;
-      white-space: nowrap;
+      padding: 0;
+      border: none;
+      background: transparent;
     }
-    .done-toggle:hover { border-color: var(--done); color: var(--done); }
     .done-toggle input {
-      width: 1rem;
-      height: 1rem;
+      width: 1.125rem;
+      height: 1.125rem;
+      margin: 0;
       accent-color: var(--done);
       cursor: pointer;
     }
-    .step.is-done { display: none; }
-    body.show-done .step.is-done {
-      display: block;
-      opacity: 0.55;
-      border-style: dashed;
+    .step.is-done {
+      margin-top: 0.35rem;
+      padding-top: 0.15rem;
+      padding-bottom: 0.15rem;
+    }
+    .step.is-done > :not(.step-head) {
+      display: none;
+    }
+    .step.is-done .step-head {
+      margin-bottom: 0;
+      align-items: center;
+    }
+    .step.is-done .step-head h3,
+    .step.is-done .field-label strong {
+      color: #9aa0a6;
+      font-weight: 400;
+      text-decoration: line-through;
+    }
+    .step.is-done .field-label .req,
+    .step.is-done .field-label .hint,
+    .step.is-done .field-label .opt,
+    .step.is-done .step-head .req,
+    .step.is-done .step-head .opt,
+    .step.is-done .badge {
+      display: none;
     }
     .step.substep {
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--line);
+      --tick-col: 1.25rem;
+      --tick-gap: 0.65rem;
+      margin-top: 1.1rem;
+      padding-top: 0;
     }
     .step.substep:first-of-type { margin-top: 0.75rem; }
+    /* Nest body under the title column (same start as h3 / strong) */
+    .step.substep > :not(.step-head) {
+      margin-left: calc(var(--tick-col) + var(--tick-gap));
+    }
     .badge {
       font-size: 0.7rem;
       font-weight: 600;
@@ -185,17 +256,16 @@
       color: var(--muted);
     }
     .field {
-      margin: 1rem 0;
-      border-top: 1px solid var(--line);
-      padding-top: 1rem;
+      margin: 1.1rem 0;
+      padding-top: 0;
     }
-    .field:first-of-type { border-top: 0; padding-top: 0.25rem; }
+    .field:first-of-type { padding-top: 0.25rem; }
     .field-label {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      margin-bottom: 0.35rem;
+      align-items: flex-start;
+      gap: 0.65rem;
+      margin-bottom: 0;
+      width: 100%;
     }
     .field-label strong {
       font-size: 0.9rem;
@@ -326,25 +396,287 @@
     }
     .all-done.show { display: block; }
     .all-done strong { color: var(--done); font-size: 1.1rem; }
+
+    /* —— Dev flags dock (bottom-right) —— */
+    .dev-dock {
+      position: fixed;
+      right: 1rem;
+      bottom: 1rem;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.5rem;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    .dev-dock-toggle {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      color: var(--muted);
+    }
+    .dev-dock-toggle:hover,
+    .dev-dock-toggle[aria-expanded="true"] {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .dev-flags {
+      display: none;
+      min-width: 16rem;
+      padding: 0.85rem 1rem;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    .dev-flags.open { display: block; }
+    .dev-flags .dev-flags-title {
+      margin: 0 0 0.65rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .dev-flags label {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.55rem;
+      cursor: pointer;
+      line-height: 1.35;
+    }
+    .dev-flags input { margin-top: 0.15rem; accent-color: var(--accent); }
+    .toast { bottom: 4.5rem; }
+
+    .cws-only { display: none !important; }
+    /* —— Mimic Chrome Web Store dashboard —— */
+    body.mimic-cws {
+      background: #fff;
+      color: #202124;
+      font-family: Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    body.mimic-cws .simple-only { display: none !important; }
+    body.mimic-cws .cws-only { display: block !important; }
+    body.mimic-cws .cws-only.cws-flex { display: flex !important; }
+    body.mimic-cws h2 .cws-only,
+    body.mimic-cws h2 .cws-only .badge { display: inline !important; }
+    body.mimic-cws header.app-header {
+      background: #fff;
+      padding: 1.25rem 1.5rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      box-shadow: 0 1px 2px rgba(60,64,67,0.15);
+    }
+    body.mimic-cws header.app-header .inner {
+      max-width: none;
+      margin: 0;
+    }
+    body.mimic-cws .cws-topbar-title {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 400;
+      letter-spacing: 0;
+      color: #202124;
+      line-height: 1.25;
+    }
+    body.mimic-cws .cws-topbar-meta {
+      margin: 0.35rem 0 0;
+      font-size: 0.8125rem;
+      color: #5f6368;
+    }
+    body.mimic-cws .cws-topbar-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    body.mimic-cws .cws-topbar-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    body.mimic-cws .cws-topbar-actions .btn {
+      border-radius: 999px;
+      padding: 0.5rem 1.1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    body.mimic-cws .layout-wrap {
+      grid-template-columns: 15rem minmax(0, 1fr);
+      min-height: calc(100vh - 5.5rem);
+      max-width: none;
+      margin: 0;
+    }
+    body.mimic-cws .side-nav {
+      padding: 1.25rem 0 3rem 0.5rem;
+      background: #fff;
+      top: 5.5rem;
+    }
+    body.mimic-cws .side-nav-label {
+      display: block;
+      padding: 0.35rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #202124;
+    }
+    body.mimic-cws .side-nav a {
+      padding: 0.55rem 1rem 0.55rem 1.75rem;
+      color: #3c4043;
+      border-radius: 0 1.5rem 1.5rem 0;
+      margin-right: 0.75rem;
+    }
+    body.mimic-cws .side-nav a:hover {
+      background: #f1f3f4;
+    }
+    body.mimic-cws .side-nav a.is-active {
+      background: #e8f0fe;
+      color: #1967d2;
+      font-weight: 500;
+    }
+    body.mimic-cws .side-nav a.is-empty {
+      color: #9aa0a6;
+    }
+    body.mimic-cws main {
+      max-width: none;
+      margin: 0;
+      padding: 1.5rem 2.5rem 4rem;
+      background: #fff;
+      border: 0;
+      border-radius: 0;
+    }
+    body.mimic-cws footer,
+    body.mimic-cws .all-done,
+    body.mimic-cws .badge {
+      display: none !important;
+    }
+    body.mimic-cws .cws-panel-title {
+      margin: 0 0 1.5rem;
+      font-size: 1.75rem;
+      font-weight: 400;
+      color: #202124;
+    }
+    body.mimic-cws main > section.card {
+      display: none;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      margin: 0 0 2.5rem;
+      max-width: 48rem;
+    }
+    body.mimic-cws[data-cws-panel="get-started"] #get-started,
+    body.mimic-cws[data-cws-panel="product-details"] #product-details,
+    body.mimic-cws[data-cws-panel="graphic-assets"] #graphic-assets,
+    body.mimic-cws[data-cws-panel="additional-fields"] #additional-fields,
+    body.mimic-cws[data-cws-panel="privacy-permissions"] #privacy-permissions,
+    body.mimic-cws[data-cws-panel="distribution"] #distribution {
+      display: block;
+    }
+    body.mimic-cws section.card > h2 {
+      font-size: 1.125rem;
+      font-weight: 400;
+      color: #202124;
+      margin: 0 0 1rem;
+    }
+    body.mimic-cws .privacy-alert {
+      max-width: 48rem;
+      border-radius: 8px;
+    }
+    body.mimic-cws .copy-wrap {
+      background: #fff;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      margin-top: 0.35rem;
+    }
+    body.mimic-cws .copy-wrap:focus-within {
+      border-color: #1a73e8;
+      box-shadow: inset 0 0 0 1px #1a73e8;
+    }
+    body.mimic-cws pre.copy-block {
+      font-family: Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 0.9375rem;
+      padding: 1rem 2.75rem 1rem 1rem;
+      min-height: 3rem;
+    }
+    body.mimic-cws .field-label strong,
+    body.mimic-cws .step-head h3 {
+      font-size: 1rem;
+      font-weight: 500;
+      color: #202124;
+    }
+    body.mimic-cws .step.is-done .step-head h3,
+    body.mimic-cws .step.is-done .field-label strong {
+      color: #9aa0a6;
+      font-weight: 400;
+    }
+    body.mimic-cws .btn.primary {
+      border-radius: 999px;
+      font-weight: 500;
+      background: #1a73e8;
+    }
+    body.mimic-cws p.lead { display: none; }
+    body.mimic-cws .form-hint,
+    body.mimic-cws .hint {
+      color: #5f6368;
+      font-size: 0.8125rem;
+    }
+    @media (max-width: 800px) {
+      body.mimic-cws .layout-wrap {
+        grid-template-columns: 1fr;
+      }
+      body.mimic-cws .side-nav {
+        padding: 0.75rem 1rem 0;
+        top: auto;
+      }
+      body.mimic-cws .side-nav a {
+        border-radius: 999px;
+        padding: 0.4rem 0.85rem;
+        margin: 0;
+      }
+    }
   </style>
 </head>
-<body>
-  <header>
+<body data-cws-panel="product-details">
+  <header class="app-header">
     <div class="inner">
-      <h1>How to publish Video Speed Controller to Chrome Web Store</h1>
-      <p class="tagline">Tick <strong>Done</strong> on each task to hide it. Defaults: British English, Unlisted.</p>
+      <h1 class="simple-only">Publish Video Speed Controller to Chrome Web Store</h1>
+      <div class="cws-only cws-flex cws-topbar-row">
+        <div>
+          <p class="cws-topbar-title">Video Speed Controller</p>
+          <p class="cws-topbar-meta">Status: Draft · helper mirrors dashboard tabs</p>
+        </div>
+        <div class="cws-topbar-actions">
+          <button type="button" class="btn" tabindex="-1">Save draft</button>
+          <button type="button" class="btn primary" tabindex="-1">Submit for review</button>
+        </div>
+      </div>
     </div>
   </header>
 
-  <main>
-    <div class="toolbar">
-      <label>
-        <input type="checkbox" id="show-done">
-        Show completed
-      </label>
-      <button type="button" class="btn" id="reset-done">Reset ticks</button>
-    </div>
+  <div class="layout-wrap">
+    <nav class="side-nav" id="side-nav" aria-label="Sections">
+      <span class="side-nav-label cws-only">Build</span>
+      <a href="#get-started" data-panel="get-started">Get started</a>
+      <a href="#product-details" data-panel="product-details" class="is-active">Product details</a>
+      <a href="#graphic-assets" data-panel="graphic-assets">Graphic assets</a>
+      <a href="#additional-fields" data-panel="additional-fields">Additional fields</a>
+      <a href="#privacy-permissions" data-panel="privacy-permissions">Privacy &amp; permissions</a>
+      <a href="#distribution" data-panel="distribution">Distribution</a>
+    </nav>
 
+  <main>
+    <h1 class="cws-panel-title cws-only" id="cws-panel-title">Product details</h1>
     <div class="privacy-alert" id="privacy-alert" role="alert">
       <strong>Privacy / product page is not reachable</strong>
       Host or fix
@@ -352,27 +684,20 @@
       before submitting the listing. The store needs a live HTTPS privacy policy URL.
     </div>
 
-    <div class="all-done" id="all-done">
+    <div class="all-done simple-only" id="all-done">
       <strong>All tasks ticked</strong>
       <p style="margin:0.35rem 0 0;color:var(--done)">Checklist complete — submit when the dashboard is ready.</p>
     </div>
 
-    <nav class="page-nav" aria-label="Sections">
-      <a href="#get-started">Get started</a>
-      <a href="#product-details">Product details</a>
-      <a href="#graphic-assets">Graphic assets</a>
-      <a href="#additional-fields">Additional fields</a>
-      <a href="#privacy-permissions">Privacy &amp; permissions</a>
-    </nav>
 
     <!-- ========== GET STARTED ========== -->
     <section class="card" id="get-started">
-      <h2>Get started</h2>
+      <h2><span class="simple-only">Get started</span><span class="cws-only">Package</span></h2>
 
       <div class="step substep" data-step="open-dashboard">
         <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
           <h3>Open Developer Dashboard</h3>
-          <label class="done-toggle"><input type="checkbox" data-done> Done</label>
         </div>
         <p class="form-hint">New item or the existing listing for this extension.</p>
         <p><a class="btn primary" href="https://chrome.google.com/webstore/devconsole" target="_blank" rel="noopener">Open Developer Dashboard</a></p>
@@ -380,8 +705,8 @@
 
       <div class="step substep" data-step="download-zip">
         <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
           <h3>Download package zip</h3>
-          <label class="done-toggle"><input type="checkbox" data-done> Done</label>
         </div>
         <p class="form-hint">Save the upload package locally before uploading it in the dashboard.</p>
         <p><a class="btn primary" href="video-speed-controller.zip" download>Download video-speed-controller.zip</a></p>
@@ -389,8 +714,8 @@
 
       <div class="step substep" data-step="upload-zip">
         <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
           <h3>Upload package zip</h3>
-          <label class="done-toggle"><input type="checkbox" data-done> Done</label>
         </div>
         <p class="form-hint">In the dashboard: New item → upload the zip (or upload a new package on an existing item after code changes).</p>
       </div>
@@ -398,19 +723,17 @@
 
     <!-- ========== PRODUCT DETAILS ========== -->
     <section class="card" id="product-details">
-      <h2>Product details <span class="badge you">Form section</span></h2>
-      <p class="form-hint">For all languages · Focus on explaining what the item does and why users should install it.</p>
-      <p class="form-hint"><strong>Title</strong> and <strong>Summary</strong> are filled automatically from the package (<code>manifest.json</code> name / description). Edit the manifest and re-zip to change them — no paste tasks below.</p>
+      <h2>Product details</h2>
 
       <div class="field step substep" data-step="description" data-copy>
         <div class="step-head">
           <div class="field-label" style="border:0;margin:0;padding:0;width:100%">
+            <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
             <div>
               <strong>Description</strong>
               <span class="req">Required</span>
               <span class="hint"> · max 16,000 characters</span>
             </div>
-            <label class="done-toggle"><input type="checkbox" data-done> Done</label>
           </div>
         </div>
         <div class="copy-wrap">
@@ -443,12 +766,12 @@ No account required. No analytics. No data sent to the developer. Your preferenc
       <div class="field step substep" data-step="category" data-copy>
         <div class="step-head">
           <div class="field-label" style="border:0;margin:0;padding:0;width:100%">
+            <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
             <div>
               <strong>Category</strong>
               <span class="req">Required</span>
               <span class="hint"> · Productivity is a <em>group</em>, not a choice</span>
             </div>
-            <label class="done-toggle"><input type="checkbox" data-done> Done</label>
           </div>
         </div>
         <div class="copy-wrap">
@@ -474,12 +797,12 @@ No account required. No analytics. No data sent to the developer. Your preferenc
       <div class="field step substep" data-step="language" data-copy>
         <div class="step-head">
           <div class="field-label" style="border:0;margin:0;padding:0;width:100%">
+            <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
             <div>
               <strong>Language</strong>
               <span class="req">Required</span>
               <span class="hint"> · British English</span>
             </div>
-            <label class="done-toggle"><input type="checkbox" data-done> Done</label>
           </div>
         </div>
         <div class="copy-wrap">
@@ -494,13 +817,12 @@ No account required. No analytics. No data sent to the developer. Your preferenc
 
     <!-- ========== GRAPHIC ASSETS ========== -->
     <section class="card" id="graphic-assets">
-      <h2>Graphic assets <span class="badge you">Form section</span></h2>
-      <p class="form-hint">JPEG or <strong>24-bit PNG (no alpha)</strong>. Tick each upload as you finish it.</p>
+      <h2>Graphic assets</h2>
 
       <div class="step substep" data-step="store-icon">
         <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
           <h3>Store icon <span class="req">Required</span></h3>
-          <label class="done-toggle"><input type="checkbox" data-done> Done</label>
         </div>
         <p class="form-hint">128 × 128 · Drop icon here</p>
         <div class="assets">
@@ -517,16 +839,16 @@ No account required. No analytics. No data sent to the developer. Your preferenc
 
       <div class="step substep" data-step="promo-video">
         <div class="step-head">
-          <h3>Global promo video <span class="badge skip">Skip</span></h3>
-          <label class="done-toggle"><input type="checkbox" data-done> Done</label>
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
+          <h3>Skip global promo video</h3>
         </div>
         <p class="form-hint">YouTube URL · optional · leave blank.</p>
       </div>
 
       <div class="step substep" data-step="screenshots">
         <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
           <h3>Screenshots <span class="req">At least one required</span></h3>
-          <label class="done-toggle"><input type="checkbox" data-done> Done</label>
         </div>
         <p class="form-hint">Up to 5 · 1,280 × 800 or 640 × 400 · JPEG or 24-bit PNG (no alpha)</p>
         <div class="assets">
@@ -559,8 +881,8 @@ No account required. No analytics. No data sent to the developer. Your preferenc
 
       <div class="step substep" data-step="small-promo">
         <div class="step-head">
-          <h3>Small promo tile <span class="opt">Recommended</span></h3>
-          <label class="done-toggle"><input type="checkbox" data-done> Done</label>
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
+          <h3>Recommended small promo tile</h3>
         </div>
         <p class="form-hint">440 × 280 · JPEG or 24-bit PNG (no alpha)</p>
         <div class="assets">
@@ -576,8 +898,8 @@ No account required. No analytics. No data sent to the developer. Your preferenc
 
       <div class="step substep" data-step="marquee-promo">
         <div class="step-head">
-          <h3>Marquee promo tile <span class="opt">Optional</span></h3>
-          <label class="done-toggle"><input type="checkbox" data-done> Done</label>
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
+          <h3>Optional marquee promo tile</h3>
         </div>
         <p class="form-hint">1400 × 560 · JPEG or 24-bit PNG (no alpha)</p>
         <div class="assets">
@@ -594,12 +916,12 @@ No account required. No analytics. No data sent to the developer. Your preferenc
 
     <!-- ========== ADDITIONAL FIELDS ========== -->
     <section class="card" id="additional-fields">
-      <h2>Additional fields <span class="badge you">Form section</span></h2>
+      <h2>Additional fields</h2>
 
       <div class="step substep" data-step="official-url">
         <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
           <h3>Official URL</h3>
-          <label class="done-toggle"><input type="checkbox" data-done> Done</label>
         </div>
         <p class="form-hint">Select from verified sites, or leave <strong>None</strong>.</p>
         <div class="answer-row">
@@ -611,11 +933,11 @@ No account required. No analytics. No data sent to the developer. Your preferenc
       <div class="step substep" data-step="homepage-url" data-copy>
         <div class="step-head">
           <div class="field-label" style="border:0;margin:0;padding:0;width:100%">
+            <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
             <div>
               <strong>Homepage URL</strong>
               <span class="hint"> · max 2,048</span>
             </div>
-            <label class="done-toggle"><input type="checkbox" data-done> Done</label>
           </div>
         </div>
         <div class="copy-wrap">
@@ -627,11 +949,11 @@ No account required. No analytics. No data sent to the developer. Your preferenc
       <div class="step substep" data-step="support-url" data-copy>
         <div class="step-head">
           <div class="field-label" style="border:0;margin:0;padding:0;width:100%">
+            <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
             <div>
               <strong>Support URL</strong>
               <span class="hint"> · max 2,048</span>
             </div>
-            <label class="done-toggle"><input type="checkbox" data-done> Done</label>
           </div>
         </div>
         <div class="copy-wrap">
@@ -639,47 +961,18 @@ No account required. No analytics. No data sent to the developer. Your preferenc
         <button type="button" class="copy" aria-label="Copy" title="Copy"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
       </div>
       </div>
-
-      <div class="step substep" data-step="mature">
-        <div class="step-head">
-          <h3>Mature content</h3>
-          <label class="done-toggle"><input type="checkbox" data-done> Done</label>
-        </div>
-        <div class="answer-row">
-          <span class="label">Answer</span>
-          <span class="value">No</span>
-        </div>
-      </div>
-
-      <div class="step substep" data-step="visibility">
-        <div class="step-head">
-          <h3>Item support / Visibility</h3>
-          <label class="done-toggle"><input type="checkbox" data-done> Done</label>
-        </div>
-        <div class="answer-row">
-          <span class="label">Visibility</span>
-          <span class="value">Unlisted</span>
-        </div>
-        <p class="hint" style="margin:0.35rem 0 0.5rem">
-          Start <strong>Unlisted</strong> so people only reach it via the link. Switch to Public later if you want store search.
-        </p>
-        <div class="answer-row">
-          <span class="label">Item support</span>
-          <span class="value">On</span>
-        </div>
-      </div>
     </section>
 
     <!-- ========== PRIVACY / PERMISSIONS ========== -->
     <section class="card" id="privacy-permissions">
-      <h2>Privacy &amp; permissions <span class="badge you">Other tabs</span></h2>
+      <h2><span class="simple-only">Privacy &amp; permissions</span><span class="cws-only">Privacy</span></h2>
       <p class="lead">Not on Store listing — use when the dashboard asks.</p>
 
       <div class="field step substep" data-step="privacy-url" data-copy>
         <div class="step-head">
           <div class="field-label" style="border:0;margin:0;padding:0;width:100%">
+            <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
             <strong>Privacy policy URL</strong>
-            <label class="done-toggle"><input type="checkbox" data-done> Done</label>
           </div>
         </div>
         <div class="copy-wrap">
@@ -691,8 +984,8 @@ No account required. No analytics. No data sent to the developer. Your preferenc
       <div class="field step substep" data-step="single-purpose" data-copy>
         <div class="step-head">
           <div class="field-label" style="border:0;margin:0;padding:0;width:100%">
+            <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
             <strong>Single purpose</strong>
-            <label class="done-toggle"><input type="checkbox" data-done> Done</label>
           </div>
         </div>
         <div class="copy-wrap">
@@ -704,8 +997,8 @@ No account required. No analytics. No data sent to the developer. Your preferenc
       <div class="field step substep" data-step="perm-storage" data-copy>
         <div class="step-head">
           <div class="field-label" style="border:0;margin:0;padding:0;width:100%">
+            <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
             <strong>storage — justification</strong>
-            <label class="done-toggle"><input type="checkbox" data-done> Done</label>
           </div>
         </div>
         <div class="copy-wrap">
@@ -717,8 +1010,8 @@ No account required. No analytics. No data sent to the developer. Your preferenc
       <div class="field step substep" data-step="perm-sidepanel" data-copy>
         <div class="step-head">
           <div class="field-label" style="border:0;margin:0;padding:0;width:100%">
+            <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
             <strong>sidePanel — justification</strong>
-            <label class="done-toggle"><input type="checkbox" data-done> Done</label>
           </div>
         </div>
         <div class="copy-wrap">
@@ -730,8 +1023,8 @@ No account required. No analytics. No data sent to the developer. Your preferenc
       <div class="field step substep" data-step="perm-hosts" data-copy>
         <div class="step-head">
           <div class="field-label" style="border:0;margin:0;padding:0;width:100%">
+            <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
             <strong>Host / &lt;all_urls&gt; — justification</strong>
-            <label class="done-toggle"><input type="checkbox" data-done> Done</label>
           </div>
         </div>
         <div class="copy-wrap">
@@ -743,8 +1036,8 @@ No account required. No analytics. No data sent to the developer. Your preferenc
       <div class="field step substep" data-step="privacy-qa" data-copy>
         <div class="step-head">
           <div class="field-label" style="border:0;margin:0;padding:0;width:100%">
+            <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
             <strong>Privacy questionnaire</strong>
-            <label class="done-toggle"><input type="checkbox" data-done> Done</label>
           </div>
         </div>
         <div class="copy-wrap">
@@ -759,8 +1052,8 @@ Privacy policy URL: https://dannyhope.co.uk/video-speed-controller/</pre>
       <div class="field step substep" data-step="support-email" data-copy>
         <div class="step-head">
           <div class="field-label" style="border:0;margin:0;padding:0;width:100%">
+            <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
             <strong>Support email</strong>
-            <label class="done-toggle"><input type="checkbox" data-done> Done</label>
           </div>
         </div>
         <div class="copy-wrap">
@@ -769,15 +1062,54 @@ Privacy policy URL: https://dannyhope.co.uk/video-speed-controller/</pre>
       </div>
       </div>
     </section>
-  </main>
 
-  <footer>
-    <div class="inner">
-      Category: Productivity group → <strong>Tools</strong>.
-      Defaults: British English · Unlisted (link only).
-      Done ticks are on tasks only; saved in this browser.
+    <!-- ========== DISTRIBUTION ========== -->
+    <section class="card" id="distribution">
+      <h2>Distribution</h2>
+
+      <div class="step substep" data-step="mature">
+        <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
+          <h3>Mature content</h3>
+        </div>
+        <div class="answer-row">
+          <span class="label">Answer</span>
+          <span class="value">No</span>
+        </div>
+      </div>
+
+      <div class="step substep" data-step="visibility">
+        <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
+          <h3>Visibility / Item support</h3>
+        </div>
+        <div class="answer-row">
+          <span class="label">Visibility</span>
+          <span class="value">Unlisted</span>
+        </div>
+        <p class="hint" style="margin:0.35rem 0 0.5rem">
+          Start <strong>Unlisted</strong> so people only reach it via the link. Switch to Public later if you want store search.
+        </p>
+        <div class="answer-row">
+          <span class="label">Item support</span>
+          <span class="value">On</span>
+        </div>
+      </div>
+    </section>
+  </main>
+  </div>
+
+
+  <div class="dev-dock" id="dev-dock">
+    <div class="dev-flags" id="dev-flags" role="dialog" aria-label="Flags">
+      <p class="dev-flags-title">Flags</p>
+      <label>
+        <input type="checkbox" id="flag-mimic-cws">
+        <span>Mimic Web Store layout</span>
+      </label>
     </div>
-  </footer>
+    <button type="button" class="dev-dock-toggle" id="dev-dock-toggle" aria-expanded="false" aria-controls="dev-flags" title="Flags">⚙</button>
+  </div>
 
   <div class="toast" id="toast" role="status">Copied</div>
 
@@ -807,11 +1139,23 @@ Privacy policy URL: https://dannyhope.co.uk/video-speed-controller/</pre>
       localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
     }
 
+    function updateSideNavEmpty() {
+      document.querySelectorAll('#side-nav a[data-panel]').forEach((a) => {
+        const section = document.querySelector(a.getAttribute('href'));
+        if (!section) return;
+        const steps = [...section.querySelectorAll('.step[data-step]')];
+        const empty = steps.length > 0 && steps.every((s) => s.classList.contains('is-done'));
+        a.classList.toggle('is-empty', empty);
+      });
+    }
+
     function updateAllDone() {
       const steps = [...document.querySelectorAll('.step[data-step]')];
       const total = steps.length;
       const done = steps.filter((s) => s.classList.contains('is-done')).length;
-      document.getElementById('all-done').classList.toggle('show', done === total && total > 0);
+      const el = document.getElementById('all-done');
+      if (el) el.classList.toggle('show', done === total && total > 0);
+      updateSideNavEmpty();
     }
 
     function applyDoneState() {
@@ -835,18 +1179,15 @@ Privacy policy URL: https://dannyhope.co.uk/video-speed-controller/</pre>
         saveDone(map);
         step.classList.toggle('is-done', input.checked);
         updateAllDone();
-        if (input.checked) showToast('Hidden — tick “Show completed” to bring back');
       });
-    });
-
-    document.getElementById('show-done').addEventListener('change', (e) => {
-      document.body.classList.toggle('show-done', e.target.checked);
-    });
-
-    document.getElementById('reset-done').addEventListener('click', () => {
-      localStorage.removeItem(STORAGE_KEY);
-      applyDoneState();
-      showToast('All ticks cleared');
+      const head = step.querySelector('.step-head');
+      if (!head) return;
+      head.addEventListener('click', (e) => {
+        if (e.target.closest('input[data-done], a, button')) return;
+        e.preventDefault();
+        input.checked = !input.checked;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
     });
 
     document.querySelectorAll('[data-copy]').forEach((field) => {
@@ -908,6 +1249,83 @@ Privacy policy URL: https://dannyhope.co.uk/video-speed-controller/</pre>
 
     applyDoneState();
     checkPrivacyPage();
+
+    const FLAGS_KEY = 'vsc-publish-flags-v1';
+    const PANEL_TITLES = {
+      'get-started': 'Get started',
+      'product-details': 'Product details',
+      'graphic-assets': 'Graphic assets',
+      'additional-fields': 'Additional fields',
+      'privacy-permissions': 'Privacy',
+      distribution: 'Distribution',
+    };
+
+    function loadFlags() {
+      try {
+        return JSON.parse(localStorage.getItem(FLAGS_KEY) || '{}');
+      } catch {
+        return {};
+      }
+    }
+
+    function saveFlags(flags) {
+      localStorage.setItem(FLAGS_KEY, JSON.stringify(flags));
+    }
+
+    function setCwsPanel(panel) {
+      document.body.dataset.cwsPanel = panel;
+      const title = document.getElementById('cws-panel-title');
+      if (title) title.textContent = PANEL_TITLES[panel] || panel;
+      document.querySelectorAll('#side-nav a[data-panel]').forEach((a) => {
+        a.classList.toggle('is-active', a.dataset.panel === panel);
+      });
+    }
+
+    function applyMimic(on) {
+      document.body.classList.toggle('mimic-cws', on);
+      const flag = document.getElementById('flag-mimic-cws');
+      if (flag) flag.checked = on;
+      if (on && !document.body.dataset.cwsPanel) {
+        setCwsPanel('product-details');
+      } else if (on) {
+        setCwsPanel(document.body.dataset.cwsPanel || 'product-details');
+      }
+    }
+
+    (function initFlags() {
+      const flags = loadFlags();
+      const mimic = flags.mimicCws !== false; // default on
+      applyMimic(mimic);
+
+      const toggle = document.getElementById('dev-dock-toggle');
+      const panel = document.getElementById('dev-flags');
+      toggle.addEventListener('click', () => {
+        const open = !panel.classList.contains('open');
+        panel.classList.toggle('open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+
+      document.getElementById('flag-mimic-cws').addEventListener('change', (e) => {
+        const next = loadFlags();
+        next.mimicCws = e.target.checked;
+        saveFlags(next);
+        applyMimic(e.target.checked);
+      });
+
+      document.querySelectorAll('#side-nav a[data-panel]').forEach((a) => {
+        a.addEventListener('click', (e) => {
+          setCwsPanel(a.dataset.panel);
+          if (document.body.classList.contains('mimic-cws')) {
+            e.preventDefault();
+          }
+          const target = document.querySelector(a.getAttribute('href'));
+          if (target) {
+            const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+          }
+        });
+      });
+    })();
   </script>
 </body>
 </html>

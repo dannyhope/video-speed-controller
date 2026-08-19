@@ -1,6 +1,6 @@
 # Publish in ~30 minutes — your checklist
 
-**Use the interactive guide:** open [`publish/index.html`](index.html) — titled *How to publish Video Speed Controller to Chrome Web Store*.
+**Use the interactive guide:** open [`publish/index.html`](index.html) — titled *Publish Video Speed Controller to Chrome Web Store*.
 
 Markdown below is a backup. The HTML page is what you should use.
 
