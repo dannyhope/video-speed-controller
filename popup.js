@@ -97,7 +97,7 @@ function validateShortcuts(shortcuts) {
     const allKeys = {}; // Track which action each key belongs to
     const errors = [];
 
-    const requiredKeys = ['speedUp', 'speedDown', 'reset', 'skipSilence'];
+    const requiredKeys = ['speedUp', 'speedDown', 'reset'];
 
     for (const key of requiredKeys) {
         if (!(key in shortcuts)) {
@@ -225,10 +225,12 @@ async function loadSettings() {
             }
 
             if (result.shortcuts) {
-                currentSettings.shortcuts = {
+                const shortcuts = {
                     ...defaultSettings.shortcuts,
                     ...result.shortcuts
                 };
+                delete shortcuts.skipSilence;
+                currentSettings.shortcuts = shortcuts;
             }
 
             if (typeof result.pausingResetsSpeed === 'boolean') {
@@ -489,9 +491,6 @@ function updateShortcutsUI() {
     if (elements.shortcutReset) {
         elements.shortcutReset.value = currentSettings.shortcuts.reset;
     }
-    if (elements.shortcutSkipSilence) {
-        elements.shortcutSkipSilence.value = currentSettings.shortcuts.skipSilence || 'g';
-    }
 }
 
 // Update playback options in UI
@@ -659,7 +658,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             shortcutSpeedUp: document.getElementById('shortcutSpeedUp'),
             shortcutSpeedDown: document.getElementById('shortcutSpeedDown'),
             shortcutReset: document.getElementById('shortcutReset'),
-            shortcutSkipSilence: document.getElementById('shortcutSkipSilence'),
             pausingResetsSpeed: document.getElementById('pausingResetsSpeed'),
             skipSilenceEnabled: document.getElementById('skipSilenceEnabled')
         };
@@ -702,10 +700,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (elements.shortcutReset) {
             elements.shortcutReset.addEventListener('keydown', handleShortcutKeydown);
             elements.shortcutReset.addEventListener('input', handleShortcutInput);
-        }
-        if (elements.shortcutSkipSilence) {
-            elements.shortcutSkipSilence.addEventListener('keydown', handleShortcutKeydown);
-            elements.shortcutSkipSilence.addEventListener('input', handleShortcutInput);
         }
 
         // Playback options

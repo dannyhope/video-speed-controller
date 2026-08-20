@@ -9,7 +9,6 @@ Chrome extension that lets you control HTML5 video playback speed on any website
 | **D** | Speed up |
 | **A** | Slow down |
 | **S** | Reset / toggle normal speed |
-| **G** | Toggle skip silence (when captions exist) |
 
 Change speeds and shortcuts from the extension popup (or the ⚙ button on the video controls).
 

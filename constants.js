@@ -8,8 +8,7 @@ const DEFAULT_SETTINGS = {
     shortcuts: {
         speedUp: 'd',
         speedDown: 'a',
-        reset: 's',
-        skipSilence: 'g'
+        reset: 's'
     },
     enableNumberShortcuts: true,
     showSpeedButtons: true,

@@ -438,7 +438,7 @@ class VideoSpeedController {
                         // Validate shortcuts (single key or comma-separated list)
                         if (settings.shortcuts && typeof settings.shortcuts === 'object') {
                             const validShortcuts = {};
-                            ['speedUp', 'speedDown', 'reset', 'skipSilence'].forEach(key => {
+                            ['speedUp', 'speedDown', 'reset'].forEach(key => {
                                 const value = settings.shortcuts[key];
                                 if (typeof value === 'string' && value.trim().length > 0) {
                                     validShortcuts[key] = value.toLowerCase();
@@ -473,13 +473,15 @@ class VideoSpeedController {
             const result = storageResult.result;
             
             // Ensure all required fields exist
+            const shortcuts = {
+                ...defaultSettings.shortcuts,
+                ...result.shortcuts
+            };
+            delete shortcuts.skipSilence;
             this.settings = {
                 ...defaultSettings,
                 ...result,
-                shortcuts: {
-                    ...defaultSettings.shortcuts,
-                    ...result.shortcuts
-                }
+                shortcuts
             };
 
             // Ensure speeds are valid numbers and within range
@@ -607,13 +609,12 @@ class VideoSpeedController {
                 if (speedDownBtn) speedDownBtn.title = `Decrease speed [${formatShortcut(this.settings.shortcuts.speedDown)}]`;
                 if (resetBtn) resetBtn.title = `Reset to normal speed [${formatShortcut(this.settings.shortcuts.reset)}]`;
                 if (speedUpBtn) speedUpBtn.title = `Increase speed [${formatShortcut(this.settings.shortcuts.speedUp)}]`;
-                if (skipSilenceBtn) skipSilenceBtn.title = `Skip sections without captions [${formatShortcut(this.settings.shortcuts.skipSilence)}]`;
             } else {
                 if (speedDownBtn) speedDownBtn.title = 'Decrease speed';
                 if (resetBtn) resetBtn.title = 'Reset to normal speed';
                 if (speedUpBtn) speedUpBtn.title = 'Increase speed';
-                if (skipSilenceBtn) skipSilenceBtn.title = 'Skip sections without captions';
             }
+            if (skipSilenceBtn) skipSilenceBtn.title = 'Skip sections without captions';
             if (settingsBtn) settingsBtn.title = 'Settings';
         } catch (error) {
             console.error('Error updating shortcut hints:', error);
@@ -1163,9 +1164,6 @@ class VideoSpeedController {
                         if (!this.isLongPressing) {
                             this.startLongPress(video);
                         }
-                        actionTaken = true;
-                    } else if (matchesShortcut(key, this.settings.shortcuts.skipSilence)) {
-                        this.toggleSkipSilence(video);
                         actionTaken = true;
                     }
 
@@ -1861,16 +1859,16 @@ class VideoSpeedController {
                 if (!this.settings.shortcuts || typeof this.settings.shortcuts !== 'object') {
                     errors.push('Shortcuts is not a valid object');
                 } else {
-                    const requiredKeys = ['speedUp', 'speedDown', 'reset', 'skipSilence'];
+                    const requiredKeys = ['speedUp', 'speedDown', 'reset'];
                     for (const key of requiredKeys) {
                         if (!(key in this.settings.shortcuts)) {
-                            // skipSilence is optional for backwards compatibility
-                            if (key !== 'skipSilence') {
-                                errors.push(`Missing shortcut: ${key}`);
-                            }
+                            errors.push(`Missing shortcut: ${key}`);
                         } else if (typeof this.settings.shortcuts[key] !== 'string' || this.settings.shortcuts[key].length === 0) {
                             errors.push(`Invalid shortcut for ${key}`);
                         }
+                    }
+                    if ('skipSilence' in this.settings.shortcuts) {
+                        delete this.settings.shortcuts.skipSilence;
                     }
 
                     // Check for duplicate shortcuts across all key lists
@@ -1969,6 +1967,10 @@ class VideoSpeedController {
                             this.settings.shortcuts[key] = defaultValue;
                             repairs.push(`Repaired shortcut: ${key}`);
                         }
+                    }
+                    if ('skipSilence' in this.settings.shortcuts) {
+                        delete this.settings.shortcuts.skipSilence;
+                        repairs.push('Removed skip silence shortcut');
                     }
                 }
                 

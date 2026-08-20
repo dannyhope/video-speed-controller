@@ -91,7 +91,7 @@ ${popupCss}
   // Stub Chrome APIs so popup.js can render
   const store = {
     customSpeeds: [0.5, 0.75, 1, 1.25, 1.5, 2, 3],
-    shortcuts: { speedUp: 'd', speedDown: 'a', reset: 's', skipSilence: 'g' },
+    shortcuts: { speedUp: 'd', speedDown: 'a', reset: 's' },
     enableNumberShortcuts: true,
     showSpeedButtons: true,
     showShortcutHints: true,

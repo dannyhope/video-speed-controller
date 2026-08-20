@@ -1,6 +1,6 @@
 # Video Speed Controller — Product Spec
 
-> Living document. Update whenever behaviour changes. Last updated: 2026-08-08.
+> Living document. Update whenever behaviour changes. Last updated: 2026-08-20.
 >
 > **This file is the source of truth for how the extension should work.** If code, README, or store listing copy disagree with this spec, update them to match this document.
 
@@ -30,7 +30,6 @@ Video Speed Controller is a Chrome extension that lets people change HTML5 video
   - **Speed up:** `d`
   - **Slow down:** `a`
   - **Reset / toggle normal:** `s`
-  - **Skip silence toggle:** `g`
 - Shortcuts may be comma-separated (multiple keys per action).
 - Shortcuts are ignored while focus is in an `INPUT` or `TEXTAREA`.
 - Changing speed shows a brief centred overlay (`Normal speed` or `N×`).
@@ -47,9 +46,9 @@ Stored in `chrome.storage.sync`:
 | Key | Meaning |
 |-----|---------|
 | `customSpeeds` | Ordered list of rates (1× cannot be removed) |
-| `shortcuts` | `speedUp`, `speedDown`, `reset`, `skipSilence` |
+| `shortcuts` | `speedUp`, `speedDown`, `reset` |
 | `pausingResetsSpeed` | If true, pause sets rate to 1× |
-| `skipSilenceEnabled` | Preference for caption-gap skipping (toggle also via shortcut/UI) |
+| `skipSilenceEnabled` | Preference for caption-gap skipping (toggle via settings checkbox or on-video button) |
 | `skipSilenceGapThreshold` | Minimum caption gap (seconds) to skip |
 | `enableNumberShortcuts` | Reserved / default true (not exposed in current popup) |
 | `showSpeedButtons` | Show on-video controls (default true) |

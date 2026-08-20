@@ -13,12 +13,11 @@ Video Speed Controller lets you speed up or slow down HTML5 videos on almost any
 - **D** — speed up
 - **A** — slow down
 - **S** — reset / toggle normal speed
-- **G** — toggle skip silence (where captions are available)
 
 Change these keys in the extension settings. You can assign more than one key per action.
 
 **On-screen controls**
-When a video is playing, hover to show compact − / 1× / + controls on the video, plus settings.
+When a video is playing, hover to show compact − / 1× / + controls on the video, plus skip silence and settings.
 
 **Custom speed presets**
 Add or remove speeds from 0.05× to 16×. Normal speed (1×) always stays available.
