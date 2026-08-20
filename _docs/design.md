@@ -1,6 +1,6 @@
 # Video Speed Controller — Design
 
-> Living document. Update whenever visual design changes. Last updated: 2026-08-08.
+> Living document. Update whenever visual design changes. Last updated: 2026-08-19.
 >
 > Companion to [`spec.md`](./spec.md) (behaviour). This file is the source of truth for **how it should look**.
 
@@ -48,9 +48,11 @@ Label: `Normal speed` at 1×, otherwise `N×`.
 
 ## Extension icons
 
+Neutral mid-grey (`#7B858A`) double-triangle (fast-forward) glyph on a **transparent** background. No rounded-square tile. About 12% inner padding so the mark does not touch the canvas edge.
+
 | Size | File |
 |------|------|
-| 16 / 48 / 128 | `icons/icon-*.png` |
+| 16 / 48 / 128 | `icons/icon-*.png` (RGBA) |
 | Source | `icons/icon.svg` / `icons/icon-2048.png` |
 
-Store listing uses the 128px icon.
+Store listing uses `publish/icon-128.png` (same glyph flattened onto white; no alpha).

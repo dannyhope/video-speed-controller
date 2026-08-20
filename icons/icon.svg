@@ -1,11 +1,4 @@
-<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_8_16)">
-<rect width="64" height="64" rx="8" fill="#A1DCF4"/>
-<path d="M4.83361 48.1818V16.3636L33.2214 32.2727L4.83361 48.1818ZM32.6026 48.1818V16.3636L60.9903 32.2727L32.6026 48.1818Z" fill="#343F44"/>
-</g>
-<defs>
-<clipPath id="clip0_8_16">
-<rect width="64" height="64" rx="8" fill="white"/>
-</clipPath>
-</defs>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 64 64" fill="none">
+  <!-- Mid-grey fast-forward glyph; ~12% inset; no tile -->
+  <path fill="#7B858A" d="M8 16v32l24-16L8 16zm22.5 0v32L56 32 30.5 16z"/>
 </svg>
