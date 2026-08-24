@@ -38,7 +38,7 @@ ${styles}
   <button class="speed-reset"><span class="icon">1×</span></button>
   <button class="speed-up"><span class="icon">+</span></button>
   <button class="skip-silence" title="Skip sections without captions"><span class="icon">⏭</span></button>
-  <button class="settings" title="Settings"><span class="icon">⚙</span></button>
+  <button class="settings" title="Preferences">Preferences</button>
 </div>
 <script>
   const v = document.getElementById('v');

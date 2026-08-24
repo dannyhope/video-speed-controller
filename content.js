@@ -247,10 +247,14 @@ class VideoSpeedController {
         this.settings = null;
         this.overlay = this.createOverlay();
         this.controls = this.createControls();
+        this.helpOverlay = this.createHelpOverlay();
+        this.helpOverlayVisible = false;
         this.currentVideo = null;
         this.controlsTimeout = null;
         this.isMouseOverVideo = false;
         this.isMouseOverControls = false;
+        this.youtubePlayer = null;
+        this.youtubeChromeObserver = null;
         this.isLongPressing = false;
         this.speedBeforeLongPress = null;
         this.longPressStartTime = null;
@@ -287,20 +291,27 @@ class VideoSpeedController {
         controls.className = 'video-speed-controls';
         controls.style.display = 'none'; // Hidden by default until video is detected
         controls.innerHTML = `
-            <button class="speed-down">
-                <span class="icon">-</span>
+            <button class="speed-down" aria-label="Slow down">
+                <span class="icon">↓</span>
+                <span class="label">Speed</span>
             </button>
-            <button class="speed-reset">
+            <button class="speed-reset" aria-label="Normal speed">
                 <span class="icon">1×</span>
             </button>
-            <button class="speed-up">
-                <span class="icon">+</span>
+            <button class="speed-up" aria-label="Speed up">
+                <span class="icon">↑</span>
+                <span class="label">Speed</span>
             </button>
-            <button class="skip-silence" title="Skip sections without captions">
+            <button class="skip-silence" aria-label="Skip silence" title="Skip sections without captions">
                 <span class="icon">⏭</span>
+                <span class="label">Skip</span>
             </button>
-            <button class="settings" title="Settings">
+            <button class="help" aria-label="Shortcut help" title="Show keyboard shortcuts">
+                <span class="icon">?</span>
+            </button>
+            <button class="settings" aria-label="Preferences" title="Preferences">
                 <span class="icon">⚙</span>
+                <span class="label">Preferences</span>
             </button>
         `;
         document.body.appendChild(controls);
@@ -315,6 +326,65 @@ class VideoSpeedController {
         });
 
         return controls;
+    }
+
+    createHelpOverlay() {
+        const help = document.createElement('div');
+        help.className = 'video-speed-help';
+        help.setAttribute('role', 'dialog');
+        help.setAttribute('aria-label', 'Keyboard shortcuts');
+        help.innerHTML = `
+            <h2>Keyboard shortcuts</h2>
+            <dl></dl>
+            <p class="help-note">Press Escape or click outside to close. Press ? to show this again.</p>
+        `;
+        document.body.appendChild(help);
+        return help;
+    }
+
+    formatShortcutList(shortcutString) {
+        if (!shortcutString) return '—';
+        return shortcutString.split(',').map(k => k.trim().toUpperCase()).filter(Boolean).join(', ');
+    }
+
+    refreshHelpOverlay() {
+        if (!this.helpOverlay || !this.settings?.shortcuts) return;
+        const list = this.helpOverlay.querySelector('dl');
+        if (!list) return;
+        const rows = [
+            ['Slow down', this.formatShortcutList(this.settings.shortcuts.speedDown)],
+            ['Speed up', this.formatShortcutList(this.settings.shortcuts.speedUp)],
+            ['Reset / toggle 1×', this.formatShortcutList(this.settings.shortcuts.reset)],
+            ['Show this help', '?']
+        ];
+        list.replaceChildren(...rows.flatMap(([action, keys]) => {
+            const dt = document.createElement('dt');
+            dt.textContent = action;
+            const dd = document.createElement('dd');
+            dd.textContent = keys;
+            return [dt, dd];
+        }));
+    }
+
+    showHelpOverlay() {
+        this.refreshHelpOverlay();
+        if (!this.helpOverlay) return;
+        this.helpOverlay.classList.add('visible');
+        this.helpOverlayVisible = true;
+    }
+
+    hideHelpOverlay() {
+        if (!this.helpOverlay) return;
+        this.helpOverlay.classList.remove('visible');
+        this.helpOverlayVisible = false;
+    }
+
+    toggleHelpOverlay() {
+        if (this.helpOverlayVisible) {
+            this.hideHelpOverlay();
+        } else {
+            this.showHelpOverlay();
+        }
     }
 
     async loadSettings() {
@@ -496,6 +566,7 @@ class VideoSpeedController {
             // Update UI
             this.updateControlsVisibility(); // This now includes video detection
             this.updateShortcutHints();
+            this.refreshHelpOverlay();
 
             // Save validated settings back if they were modified
             if (validSpeeds.length !== this.settings.customSpeeds.length) {
@@ -522,6 +593,7 @@ class VideoSpeedController {
             try {
                 this.updateControlsVisibility();
                 this.updateShortcutHints();
+                this.refreshHelpOverlay();
             } catch (uiError) {
                 console.error('Error updating UI with fallback settings:', uiError);
             }
@@ -603,6 +675,7 @@ class VideoSpeedController {
             const speedUpBtn = getButton('.speed-up');
             const skipSilenceBtn = getButton('.skip-silence');
             const settingsBtn = getButton('.settings');
+            const helpBtn = getButton('.help');
 
             // Update tooltips with keyboard shortcuts
             if (this.settings.showShortcutHints) {
@@ -615,7 +688,9 @@ class VideoSpeedController {
                 if (speedUpBtn) speedUpBtn.title = 'Increase speed';
             }
             if (skipSilenceBtn) skipSilenceBtn.title = 'Skip sections without captions';
-            if (settingsBtn) settingsBtn.title = 'Settings';
+            if (settingsBtn) settingsBtn.title = 'Preferences';
+            if (helpBtn) helpBtn.title = 'Show keyboard shortcuts [?]';
+            this.refreshHelpOverlay();
         } catch (error) {
             console.error('Error updating shortcut hints:', error);
         }
@@ -631,20 +706,9 @@ class VideoSpeedController {
                 return;
             }
 
-            // Check if there's a playing video on the page
-            const getPlayingVideo = () => {
-                const videos = Array.from(document.querySelectorAll('video'))
-                    .filter(video => video.isConnected &&
-                           (video.src || video.currentSrc) &&
-                           video.readyState !== HTMLMediaElement.HAVE_NOTHING &&
-                           !video.paused); // Only include playing videos
-
-                // Return the first playing video, or try to find the largest one
+            const pickLargest = (videos) => {
                 if (videos.length === 0) return null;
-
                 if (videos.length === 1) return videos[0];
-
-                // If multiple playing videos, return the largest
                 return videos.reduce((largest, video) => {
                     const videoArea = video.offsetWidth * video.offsetHeight;
                     const largestArea = largest ? largest.offsetWidth * largest.offsetHeight : 0;
@@ -652,14 +716,20 @@ class VideoSpeedController {
                 }, null);
             };
 
-            const playingVideo = getPlayingVideo();
-            this.currentVideo = playingVideo;
+            const readyVideos = Array.from(document.querySelectorAll('video'))
+                .filter(video => video.isConnected &&
+                       (video.src || video.currentSrc) &&
+                       video.readyState !== HTMLMediaElement.HAVE_NOTHING);
 
-            // Position controls inside the video if there's a playing video
-            if (playingVideo) {
-                this.positionControlsInsideVideo(playingVideo);
-                this.setupVideoMouseListeners(playingVideo);
-                // Start with controls hidden, they'll show on mouse movement
+            const playingVideo = pickLargest(readyVideos.filter(video => !video.paused));
+            const youtubeVideo = pickLargest(readyVideos.filter(video => video.closest('.html5-video-player')));
+            const activeVideo = playingVideo || youtubeVideo;
+            this.currentVideo = activeVideo;
+
+            if (activeVideo) {
+                this.positionControlsInsideVideo(activeVideo);
+                this.setupVideoMouseListeners(activeVideo);
+                this.ensureYouTubePreferencesLink(activeVideo.closest('.html5-video-player'));
                 this.hideControls();
             } else if (this.youtubeEmbedController && this.youtubeEmbedController.hasEmbeds()) {
                 // No direct video, but YouTube embeds exist — position controls over embed
@@ -669,9 +739,11 @@ class VideoSpeedController {
                     this.setupIframeMouseListeners(iframe);
                     this.hideControls();
                 } else {
+                    this.teardownYouTubeChromeObserver();
                     this.controls.style.display = 'none';
                 }
             } else {
+                this.teardownYouTubeChromeObserver();
                 this.controls.style.display = 'none';
                 this.currentVideo = null;
             }
@@ -754,9 +826,102 @@ class VideoSpeedController {
         }
     }
 
+    getYouTubePlayer(video = this.currentVideo) {
+        return video?.closest?.('.html5-video-player') || this.youtubePlayer || null;
+    }
+
+    isYouTubeChromeVisible() {
+        const player = this.getYouTubePlayer();
+        return !!(player && !player.classList.contains('ytp-autohide'));
+    }
+
+    syncPreferencesButton() {
+        const settingsBtn = this.controls?.querySelector('.settings');
+        if (!settingsBtn) return;
+        const native = document.querySelector('.vsc-preferences-link');
+        settingsBtn.hidden = !!(native && this.isYouTubeChromeVisible());
+    }
+
+    ensureYouTubePreferencesLink(player = this.getYouTubePlayer()) {
+        try {
+            if (!player) return null;
+
+            const existing = player.querySelector('.vsc-preferences-link');
+            if (existing) {
+                this.syncPreferencesButton();
+                return existing;
+            }
+
+            const rightControls = player.querySelector('.ytp-right-controls');
+            if (!rightControls) return null;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ytp-button vsc-preferences-link';
+            btn.title = 'Video Speed Controller preferences';
+            btn.setAttribute('aria-label', 'Preferences');
+            btn.textContent = 'Preferences';
+            btn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                chrome.runtime.sendMessage({ action: 'openSidePanel' });
+            });
+            rightControls.insertBefore(btn, rightControls.firstChild);
+            this.syncPreferencesButton();
+            return btn;
+        } catch (error) {
+            console.error('Error adding YouTube preferences link:', error);
+            return null;
+        }
+    }
+
+    setupYouTubeChromeObserver(player) {
+        try {
+            if (!player || !player.classList.contains('html5-video-player')) {
+                this.teardownYouTubeChromeObserver();
+                return;
+            }
+            if (this.youtubePlayer === player && this.youtubeChromeObserver) {
+                this.ensureYouTubePreferencesLink(player);
+                return;
+            }
+
+            this.teardownYouTubeChromeObserver();
+            this.youtubePlayer = player;
+
+            this.youtubeChromeObserver = new MutationObserver(() => {
+                this.ensureYouTubePreferencesLink(player);
+            });
+            this.youtubeChromeObserver.observe(player, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['class']
+            });
+
+            this.ensureYouTubePreferencesLink(player);
+        } catch (error) {
+            console.error('Error setting up YouTube chrome observer:', error);
+        }
+    }
+
+    teardownYouTubeChromeObserver() {
+        if (this.youtubeChromeObserver) {
+            this.youtubeChromeObserver.disconnect();
+            this.youtubeChromeObserver = null;
+        }
+        this.youtubePlayer = null;
+    }
+
     setupVideoMouseListeners(video) {
         try {
-            if (!video || video._vscMouseListenersAdded) return;
+            if (!video) return;
+
+            const surface = video.closest('.html5-video-player') || video;
+            if (surface._vscMouseListenersAdded) {
+                this.setupYouTubeChromeObserver(surface);
+                return;
+            }
 
             const mouseEnterHandler = () => {
                 this.isMouseOverVideo = true;
@@ -784,18 +949,23 @@ class VideoSpeedController {
                 this.resetControlsTimer();
             };
 
-            video.addEventListener('mouseenter', mouseEnterHandler);
-            video.addEventListener('mouseleave', mouseLeaveHandler);
-            video.addEventListener('mousemove', mouseMoveHandler);
+            surface.addEventListener('mouseenter', mouseEnterHandler);
+            surface.addEventListener('mouseleave', mouseLeaveHandler);
+            surface.addEventListener('mousemove', mouseMoveHandler);
 
-            video._vscMouseListenersAdded = true;
-            
-            // Store listeners for cleanup
+            surface._vscMouseListenersAdded = true;
+
             this.eventListeners.push(
-                { element: video, event: 'mouseenter', handler: mouseEnterHandler },
-                { element: video, event: 'mouseleave', handler: mouseLeaveHandler },
-                { element: video, event: 'mousemove', handler: mouseMoveHandler }
+                { element: surface, event: 'mouseenter', handler: mouseEnterHandler },
+                { element: surface, event: 'mouseleave', handler: mouseLeaveHandler },
+                { element: surface, event: 'mousemove', handler: mouseMoveHandler }
             );
+
+            if (surface.matches(':hover')) {
+                this.isMouseOverVideo = true;
+            }
+
+            this.setupYouTubeChromeObserver(surface);
         } catch (error) {
             console.error('Error setting up video mouse listeners:', error);
         }
@@ -811,10 +981,12 @@ class VideoSpeedController {
             if (!isVisible) {
                 this.controls.style.opacity = '1';
                 this.controls.style.display = 'flex';
+                this.controls.style.pointerEvents = 'auto';
             }
 
             // Reset the hide timer
             this.resetControlsTimer();
+            this.syncPreferencesButton();
         } catch (error) {
             console.error('Error showing controls:', error);
         }
@@ -861,13 +1033,14 @@ class VideoSpeedController {
 
             // Hide controls with fade
             this.controls.style.opacity = '0';
+            this.controls.style.pointerEvents = 'none';
 
             // Hide completely after fade animation
             setTimeout(() => {
-                if (this.controls && !this.isMouseOverVideo && !this.isMouseOverControls) {
-                    this.controls.style.display = 'none';
-                }
+                if (!this.controls || this.isMouseOverControls || this.isMouseOverVideo) return;
+                this.controls.style.display = 'none';
             }, 300);
+            this.syncPreferencesButton();
         } catch (error) {
             console.error('Error hiding controls:', error);
         }
@@ -1051,6 +1224,7 @@ class VideoSpeedController {
                 }
             }, 1000);
             this.timeouts.push(this.fadeTimeout);
+            this.showControls();
         } catch (error) {
             console.error('[VSC] Error showing embed speed indicator:', error);
         }
@@ -1125,7 +1299,18 @@ class VideoSpeedController {
             // Keydown handler
             const keydownHandler = (e) => {
                 try {
-                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+                    if (e.key === 'Escape' && this.helpOverlayVisible) {
+                        e.preventDefault();
+                        this.hideHelpOverlay();
+                        return;
+                    }
+                    const asksHelp = e.key === '?' || (e.key === '/' && e.shiftKey);
+                    if (asksHelp && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                        e.preventDefault();
+                        this.toggleHelpOverlay();
+                        return;
+                    }
                     if (!this.settings?.shortcuts) return;
 
                     const video = getCurrentVideo();
@@ -1274,6 +1459,22 @@ class VideoSpeedController {
                 };
                 addSafeListener(settingsBtn, 'click', settingsHandler);
             }
+
+            const helpBtn = getButton('.help');
+            if (helpBtn) {
+                addSafeListener(helpBtn, 'click', (event) => {
+                    event.stopPropagation();
+                    this.toggleHelpOverlay();
+                });
+            }
+
+            const documentClickHandler = (event) => {
+                if (!this.helpOverlayVisible || !this.helpOverlay) return;
+                if (this.helpOverlay.contains(event.target)) return;
+                if (helpBtn && helpBtn.contains(event.target)) return;
+                this.hideHelpOverlay();
+            };
+            addSafeListener(document, 'click', documentClickHandler);
 
             // Listen for settings updates
             const storageHandler = (changes) => {
@@ -1475,6 +1676,7 @@ class VideoSpeedController {
                 }
             }, 1000);
             this.timeouts.push(this.fadeTimeout);
+            this.showControls();
         } catch (error) {
             console.error('Error in showSpeedIndicator:', error);
         }
@@ -1649,8 +1851,13 @@ class VideoSpeedController {
             if (this.controls && this.controls.parentNode) {
                 this.controls.parentNode.removeChild(this.controls);
             }
+            if (this.helpOverlay && this.helpOverlay.parentNode) {
+                this.helpOverlay.parentNode.removeChild(this.helpOverlay);
+            }
             this.overlay = null;
             this.controls = null;
+            this.helpOverlay = null;
+            this.helpOverlayVisible = false;
         } catch (error) {
             console.error('Error removing DOM elements:', error);
         }
@@ -1800,6 +2007,8 @@ class VideoSpeedController {
                 this.videoEventObserver.disconnect();
                 this.videoEventObserver = null;
             }
+
+            this.teardownYouTubeChromeObserver();
 
             // Clear references
             this.settings = null;
