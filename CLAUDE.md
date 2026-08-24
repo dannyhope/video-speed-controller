@@ -87,11 +87,12 @@ The `getCurrentVideo()` function finds videos by:
 
 ### Loading the Extension in Chrome
 
-1. Open Chrome and navigate to `chrome://extensions/`
-2. Enable "Developer mode" toggle (top right)
-3. Click "Load unpacked"
-4. Select the repository root directory
-5. The extension should appear in the list
+1. Run `npm run pack:unpacked` (copies runtime files into `dist/`)
+2. Open Chrome and navigate to `chrome://extensions/`
+3. Enable "Developer mode" toggle (top right)
+4. Click "Load unpacked"
+5. Select the `dist` folder — not the repo root (`_docs` makes Chrome refuse the root)
+6. After code changes, re-run `npm run pack:unpacked` and reload the extension
 
 ### Testing Changes
 

@@ -59,10 +59,10 @@ Upload these (all 1280×800, 24-bit PNG, no alpha):
 ---
 
 ## Quick test before upload
-1. `chrome://extensions` → Load unpacked → this folder
+1. `npm run pack:unpacked` then `chrome://extensions` → Load unpacked → `dist/` (not the repo root)
 2. Open a video page → **D** / **A** / **S**
 3. Open the popup → change a speed → confirm it applies after reload
-4. Click the ⚙ on the video controls → side panel / settings opens
+4. Click **Preferences** on the video controls → side panel / settings opens
 
 ## Re-build zip after changes
 ```bash

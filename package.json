@@ -5,7 +5,8 @@
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:e2e": "node tests/e2e/run-tests.js"
+    "test:e2e": "node tests/e2e/run-tests.js",
+    "pack:unpacked": "bash scripts/pack-unpacked.sh"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
