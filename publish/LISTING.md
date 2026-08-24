@@ -17,7 +17,7 @@ Video Speed Controller lets you speed up or slow down HTML5 videos on almost any
 Change these keys in the extension settings. You can assign more than one key per action.
 
 **On-screen controls**
-When a video is playing, hover to show compact − / 1× / + controls on the video, plus skip silence and settings.
+When a video is playing, hover to show compact − / 1× / + controls on the video, plus skip silence and Preferences. On YouTube these appear with the player controls, and also when you change speed.
 
 **Custom speed presets**
 Add or remove speeds from 0.05× to 16×. Normal speed (1×) always stays available.
@@ -67,7 +67,7 @@ Control HTML5 video playback speed on websites using keyboard shortcuts and on-s
 Saves the user’s custom speeds, keyboard shortcuts, and playback preferences so they persist across sessions (and sync with Chrome Sync if enabled).
 
 **sidePanel**
-Opens the settings UI from the on-video settings button without leaving the page.
+Opens the settings UI from the on-video Preferences control without leaving the page.
 
 **Host permission / content scripts (`<all_urls>`)**
 Videos appear on many different websites. The content script must run on the page the user is watching so it can find `<video>` elements (and YouTube embeds) and change `playbackRate`. The extension does not collect browsing history or send page content to the developer.

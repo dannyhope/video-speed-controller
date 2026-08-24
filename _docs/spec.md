@@ -1,6 +1,6 @@
 # Video Speed Controller — Product Spec
 
-> Living document. Update whenever behaviour changes. Last updated: 2026-08-20.
+> Living document. Update whenever behaviour changes. Last updated: 2026-08-23.
 >
 > **This file is the source of truth for how the extension should work.** If code, README, or store listing copy disagree with this spec, update them to match this document.
 
@@ -36,8 +36,12 @@ Video Speed Controller is a Chrome extension that lets people change HTML5 video
 
 ### On-screen controls
 
-- When a playing video (or supported YouTube embed) is present and `showSpeedButtons` is on: show − / 1× / + / skip-silence / settings near the top-left of the video.
-- Controls appear on hover over the video; stay visible while the pointer is over the video or the control bar; fade after leaving.
+- When a playing video (or supported YouTube embed) is present and `showSpeedButtons` is on: show labelled on-screen buttons (↓ Speed, 1×, ↑ Speed, Skip, ?, Preferences) near the top-left of the video.
+- Buttons are at least 40×40px, wrap on narrow viewports, and sit flush (no gap) so hover does not flicker between them.
+- Controls appear on hover over the video; stay visible while the pointer is over the video or the control bar; fade after leaving. Keyboard-triggered controls still hide after about 2 seconds if the pointer is not over the video.
+- Press `?` or the help button to show a shortcut overlay (current keys for slow down, speed up, reset). Dismiss with Escape or a click outside.
+- On YouTube watch pages, **Preferences** sits in the native player bar (right-hand controls) so it appears and hides with YouTube’s own chrome. Changing speed also shows the on-video bar, including Preferences if YouTube’s bar is hidden.
+- **Preferences** opens the settings side panel.
 
 ### Settings (popup / side panel)
 
@@ -53,6 +57,8 @@ Stored in `chrome.storage.sync`:
 | `enableNumberShortcuts` | Reserved / default true (not exposed in current popup) |
 | `showSpeedButtons` | Show on-video controls (default true) |
 | `showShortcutHints` | Tooltips include shortcut keys (default true) |
+
+Popup shortcut fields show a permanent comma-separated example under each input. The Add speed field uses a visible hint, not a placeholder. The popup footer credits “A Danny Hope product”.
 
 ### Skip silence
 

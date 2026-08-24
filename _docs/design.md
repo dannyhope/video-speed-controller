@@ -1,6 +1,6 @@
 # Video Speed Controller — Design
 
-> Living document. Update whenever visual design changes. Last updated: 2026-08-19.
+> Living document. Update whenever visual design changes. Last updated: 2026-08-23.
 >
 > Companion to [`spec.md`](./spec.md) (behaviour). This file is the source of truth for **how it should look**.
 
@@ -30,9 +30,10 @@ Label: `Normal speed` at 1×, otherwise `N×`.
 ## On-page controls
 
 - Fixed near the video’s top-left (≈10px inset).
-- Row of compact buttons (−, 1×, +, skip silence, settings).
-- Same dark translucent bar as the overlay.
-- Hidden by default; opacity fade in/out on hover.
+- Row of labelled buttons (↓ Speed, 1×, ↑ Speed, Skip, ?, Preferences) on the same dark translucent bar as the overlay. Buttons are at least 40×40px, wrap below ~375px, and have no gap between them.
+- Hidden by default; opacity fade in/out on hover, and when speed is changed.
+- Shortcut help overlay: centred dark panel listing current keys; not a speed flash.
+- On YouTube, **Preferences** is a text control in the native right-hand player bar, styled to sit with YouTube’s own buttons.
 - Skip silence **active**: green-tinted fill; **unavailable**: reduced opacity.
 
 ---
@@ -41,6 +42,8 @@ Label: `Normal speed` at 1×, otherwise `N×`.
 
 - Compact vertical form: speed pills, shortcut fields, checkboxes.
 - Speed pills: click to edit, × to remove (not on 1×).
+- Permanent hint under Add speed (`Add speed (0.05–16)`) and under each shortcut field (comma-separated examples). No placeholder-only instructions.
+- Footer: muted “A Danny Hope product” linking to dannyhope.co.uk.
 - Status line for save / validation feedback.
 - Prefer British English in labels (“customisable”, “colour” if used).
 
