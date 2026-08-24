@@ -1,6 +1,6 @@
 # Feature: Add keyboard shortcut discovery (help overlay)
 
-**Readiness:** refined
+**Readiness:** built
 **Roadmap:** next
 **Skipped human refinement:** 2026-02-21
 **Done when:** Pressing `?` (or clicking a help button in the on-screen controls) shows an overlay listing all current keyboard shortcuts; overlay dismisses on Escape or outside click; works in iframes

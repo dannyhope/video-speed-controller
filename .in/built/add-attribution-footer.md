@@ -1,6 +1,6 @@
 # Fix: Add attribution footer to popup
 
-**Readiness:** refined
+**Readiness:** built
 **Roadmap:** later
 **Skipped human refinement:** 2026-02-21
 **Done when:** popup.html has a subtle footer with "A Danny Hope product" linking to https://dannyhope.co.uk, styled in muted text that brightens on hover

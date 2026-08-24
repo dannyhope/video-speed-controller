@@ -1,6 +1,6 @@
 # Fix: Add visible labels to on-screen control buttons
 
-**Readiness:** refined
+**Readiness:** built
 **Roadmap:** now
 **Skipped human refinement:** 2026-02-21
 **Done when:** Each on-screen control button shows a short text label alongside its icon (e.g., "↓ Speed", "1×", "↑ Speed", "⏭ Skip", "⚙") using option 1 from the implementation options; layout remains usable at typical video player widths

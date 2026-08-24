@@ -1,6 +1,6 @@
 # Fix: Make shortcut input format clearly visible
 
-**Readiness:** refined
+**Readiness:** built
 **Roadmap:** now
 **Skipped human refinement:** 2026-02-21
 **Done when:** Each shortcut input in popup.html has a visible hint paragraph (e.g., "e.g., d, =, + (separate with commas)") styled with the existing `.hint` class; tooltip is also retained

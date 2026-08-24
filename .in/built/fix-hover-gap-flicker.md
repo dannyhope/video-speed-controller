@@ -1,6 +1,6 @@
 # Fix: Remove hover gap flicker on control buttons
 
-**Readiness:** refined
+**Readiness:** built
 **Roadmap:** later
 **Skipped human refinement:** 2026-02-21
 **Done when:** Moving the pointer between adjacent speed control buttons causes no visual flicker; buttons use either 0px or 10px+ gap (consistent, intentional spacing)

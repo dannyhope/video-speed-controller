@@ -1,5 +1,5 @@
 # Keep controls visible while pointer is over video
-**Readiness:** refined
+**Readiness:** built
 **Refined:** 2026-02-17
 **Done when:** Controls remain visible for the entire duration the pointer is over the video, and only fade when the pointer leaves. Keyboard-triggered controls still auto-hide after 2s when the pointer is not over the video.
 
