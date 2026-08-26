@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Video Speed Controller is a Chrome browser extension (Manifest V3) that allows users to control video playback speed on any website using customisable keyboard shortcuts and on-screen controls.
+Video Speed Controller is a Chrome browser extension (Manifest V3) that allows users to control video playback speed on any website using customisable keyboard shortcuts and a Speed preferences link.
 
 ## Architecture
 
@@ -59,7 +59,7 @@ Settings stored in chrome.storage.sync:
     reset: string                   // Single character (default: 's')
   },
   enableNumberShortcuts: boolean,   // Allow 1-9 keys to jump to speeds
-  showSpeedButtons: boolean,        // Show on-screen controls
+  showSpeedButtons: boolean,        // Show the on-video Speed preferences link
   showShortcutHints: true,         // Show keyboard hints on buttons
   pausingResetsSpeed: boolean       // Reset speed to 1x when pausing (default: false)
 }
@@ -72,7 +72,7 @@ The VideoSpeedController maintains:
 - `currentSpeedIndex`: Index into speeds array for current playback rate
 - `settings`: Loaded from storage
 - `overlay`: DOM element for speed feedback display
-- `controls`: DOM element for on-screen speed buttons
+- `controls`: DOM element for the on-video Speed preferences link
 
 ### Video Detection Logic
 

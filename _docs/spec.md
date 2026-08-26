@@ -1,6 +1,6 @@
 # Video Speed Controller — Product Spec
 
-> Living document. Update whenever behaviour changes. Last updated: 2026-08-23.
+> Living document. Update whenever behaviour changes. Last updated: 2026-08-26.
 >
 > **This file is the source of truth for how the extension should work.** If code, README, or store listing copy disagree with this spec, update them to match this document.
 
@@ -8,7 +8,7 @@
 
 ## Purpose
 
-Video Speed Controller is a Chrome extension that lets people change HTML5 video playback speed on any website using keyboard shortcuts and small on-screen controls.
+Video Speed Controller is a Chrome extension that lets people change HTML5 video playback speed on any website using keyboard shortcuts and a Speed preferences link on the player.
 
 ---
 
@@ -16,7 +16,7 @@ Video Speed Controller is a Chrome extension that lets people change HTML5 video
 
 | Surface | Role |
 |---------|------|
-| Any page with `<video>` (or YouTube embeds) | Content script: shortcuts, overlay, speed buttons |
+| Any page with `<video>` (or YouTube embeds) | Content script: shortcuts, overlay, Speed preferences |
 | Extension popup / side panel (`popup.html`) | Settings: speeds, shortcuts, playback options |
 
 ---
@@ -36,12 +36,12 @@ Video Speed Controller is a Chrome extension that lets people change HTML5 video
 
 ### On-screen controls
 
-- When a playing video (or supported YouTube embed) is present and `showSpeedButtons` is on: show labelled on-screen buttons (↓ Speed, 1×, ↑ Speed, Skip, ?, Preferences) near the top-left of the video.
-- Buttons are at least 40×40px, wrap on narrow viewports, and sit flush (no gap) so hover does not flicker between them.
-- Controls appear on hover over the video; stay visible while the pointer is over the video or the control bar; fade after leaving. Keyboard-triggered controls still hide after about 2 seconds if the pointer is not over the video.
-- Press `?` or the help button to show a shortcut overlay (current keys for slow down, speed up, reset). Dismiss with Escape or a click outside.
-- On YouTube watch pages, **Preferences** sits in the native player bar (right-hand controls) so it appears and hides with YouTube’s own chrome. Changing speed also shows the on-video bar, including Preferences if YouTube’s bar is hidden.
-- **Preferences** opens the settings side panel.
+- When a playing video (or supported YouTube embed) is present and `showSpeedButtons` is on: show a **Speed preferences** link near the top-left of the video. Speed, skip silence, and shortcut help are not on-video buttons — use the keyboard (`d` / `a` / `s`, `?` for help) and the settings panel.
+- The link is at least 40px tall, styled as underlined text (not a row of icon buttons).
+- It appears on hover over the video; stays visible while the pointer is over the video or the link; fade after leaving. Keyboard-triggered appearance still hides after about 2 seconds if the pointer is not over the video.
+- Press `?` to show a shortcut overlay (current keys for slow down, speed up, reset). Dismiss with Escape or a click outside.
+- On YouTube watch pages, **Speed preferences** sits in the native player bar (right-hand controls) so it appears and hides with YouTube’s own chrome. If that bar is hidden, the same link shows on the video overlay.
+- **Speed preferences** opens the settings side panel.
 
 ### Settings (popup / side panel)
 
@@ -52,13 +52,13 @@ Stored in `chrome.storage.sync`:
 | `customSpeeds` | Ordered list of rates (1× cannot be removed) |
 | `shortcuts` | `speedUp`, `speedDown`, `reset` |
 | `pausingResetsSpeed` | If true, pause sets rate to 1× |
-| `skipSilenceEnabled` | Preference for caption-gap skipping (toggle via settings checkbox or on-video button) |
+| `skipSilenceEnabled` | Preference for caption-gap skipping (toggle via settings checkbox) |
 | `skipSilenceGapThreshold` | Minimum caption gap (seconds) to skip |
 | `enableNumberShortcuts` | Reserved / default true (not exposed in current popup) |
-| `showSpeedButtons` | Show on-video controls (default true) |
+| `showSpeedButtons` | Show the on-video Speed preferences link (default true) |
 | `showShortcutHints` | Tooltips include shortcut keys (default true) |
 
-Popup shortcut fields show a permanent comma-separated example under each input. The Add speed field uses a visible hint, not a placeholder. The popup footer credits “A Danny Hope product”.
+The Add speed field uses the input’s min/max constraints without additional helper copy. The popup footer has **Feedback** (https://dannyhope.co.uk/feedback) and “A Danny Hope product”.
 
 ### Skip silence
 

@@ -129,22 +129,14 @@ describe('Video Speed Controller E2E', () => {
         expect(resetRate).toBe(1);
     });
 
-    test('Clicking on-screen buttons works', async () => {
+    test('Speed preferences link is present', async () => {
         await page.goto('https://www.w3schools.com/html/html5_video.asp', {
             waitUntil: 'networkidle2'
         });
 
         await page.waitForTimeout(1000);
 
-        // Click the speed up button
-        await page.click('.video-speed-controls .speed-up');
-        await page.waitForTimeout(500);
-
-        const newRate = await page.evaluate(() => {
-            const video = document.querySelector('video');
-            return video ? video.playbackRate : null;
-        });
-
-        expect(newRate).toBeGreaterThan(1);
+        const label = await page.$eval('.video-speed-controls .settings', el => el.textContent.trim());
+        expect(label).toBe('Speed preferences');
     });
 });

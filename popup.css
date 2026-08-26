@@ -197,12 +197,7 @@ h2 {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 2px;
-}
-
-.shortcut-row + .hint {
-    margin: 0 0 12px 0;
-    text-align: right;
+    margin-bottom: 8px;
 }
 
 .shortcut-row label {
@@ -262,37 +257,21 @@ h2 {
 
 /* Footer */
 footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-top: 28px;
     padding-top: 8px;
-    text-align: center;
 }
 
-.advanced-link {
-    color: #0066cc;
-    text-decoration: none;
-    font-size: 12px;
-    transition: color 0.2s ease;
-}
-
-.advanced-link:hover {
-    color: #003366;
-    text-decoration: underline;
-}
-
-.advanced-link:focus {
-    outline: 2px solid #0066cc;
-    outline-offset: 2px;
-    border-radius: 2px;
-}
-
-.attribution-link {
-    color: #7B858A;
+.footer-link {
+    color: #616E73;
     font-size: 11px;
     text-decoration: none;
 }
 
-.attribution-link:hover,
-.attribution-link:focus {
+.footer-link:hover,
+.footer-link:focus {
     color: #343F44;
     text-decoration: underline;
 }

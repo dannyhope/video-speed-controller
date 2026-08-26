@@ -251,6 +251,7 @@ class VideoSpeedController {
         this.helpOverlayVisible = false;
         this.currentVideo = null;
         this.controlsTimeout = null;
+        this.hideAfterLeaveTimeout = null;
         this.isMouseOverVideo = false;
         this.isMouseOverControls = false;
         this.youtubePlayer = null;
@@ -291,27 +292,8 @@ class VideoSpeedController {
         controls.className = 'video-speed-controls';
         controls.style.display = 'none'; // Hidden by default until video is detected
         controls.innerHTML = `
-            <button class="speed-down" aria-label="Slow down">
-                <span class="icon">↓</span>
-                <span class="label">Speed</span>
-            </button>
-            <button class="speed-reset" aria-label="Normal speed">
-                <span class="icon">1×</span>
-            </button>
-            <button class="speed-up" aria-label="Speed up">
-                <span class="icon">↑</span>
-                <span class="label">Speed</span>
-            </button>
-            <button class="skip-silence" aria-label="Skip silence" title="Skip sections without captions">
-                <span class="icon">⏭</span>
-                <span class="label">Skip</span>
-            </button>
-            <button class="help" aria-label="Shortcut help" title="Show keyboard shortcuts">
-                <span class="icon">?</span>
-            </button>
-            <button class="settings" aria-label="Preferences" title="Preferences">
-                <span class="icon">⚙</span>
-                <span class="label">Preferences</span>
+            <button class="settings" type="button" aria-label="Speed preferences">
+                Speed preferences
             </button>
         `;
         document.body.appendChild(controls);
@@ -319,10 +301,12 @@ class VideoSpeedController {
         // Keep controls visible when hovering over them
         controls.addEventListener('mouseenter', () => {
             this.isMouseOverControls = true;
-            this.resetControlsTimer();
+            this.cancelScheduledHideControls();
+            this.showControls();
         });
         controls.addEventListener('mouseleave', () => {
             this.isMouseOverControls = false;
+            this.scheduleHideControlsAfterLeave();
         });
 
         return controls;
@@ -657,39 +641,10 @@ class VideoSpeedController {
     updateShortcutHints() {
         try {
             if (!this.controls || !this.settings) return;
-
-            // Defensive DOM queries with validation
-            const getButton = (selector) => {
-                const element = this.controls.querySelector(selector);
-                return element && element.isConnected ? element : null;
-            };
-
-            // Format shortcut for display (show all keys, uppercase)
-            const formatShortcut = (shortcutString) => {
-                if (!shortcutString) return '';
-                return shortcutString.split(',').map(k => k.trim().toUpperCase()).join(', ');
-            };
-
-            const speedDownBtn = getButton('.speed-down');
-            const resetBtn = getButton('.speed-reset');
-            const speedUpBtn = getButton('.speed-up');
-            const skipSilenceBtn = getButton('.skip-silence');
-            const settingsBtn = getButton('.settings');
-            const helpBtn = getButton('.help');
-
-            // Update tooltips with keyboard shortcuts
-            if (this.settings.showShortcutHints) {
-                if (speedDownBtn) speedDownBtn.title = `Decrease speed [${formatShortcut(this.settings.shortcuts.speedDown)}]`;
-                if (resetBtn) resetBtn.title = `Reset to normal speed [${formatShortcut(this.settings.shortcuts.reset)}]`;
-                if (speedUpBtn) speedUpBtn.title = `Increase speed [${formatShortcut(this.settings.shortcuts.speedUp)}]`;
-            } else {
-                if (speedDownBtn) speedDownBtn.title = 'Decrease speed';
-                if (resetBtn) resetBtn.title = 'Reset to normal speed';
-                if (speedUpBtn) speedUpBtn.title = 'Increase speed';
+            const settingsBtn = this.controls.querySelector('.settings');
+            if (settingsBtn && settingsBtn.isConnected) {
+                settingsBtn.title = 'Speed preferences';
             }
-            if (skipSilenceBtn) skipSilenceBtn.title = 'Skip sections without captions';
-            if (settingsBtn) settingsBtn.title = 'Preferences';
-            if (helpBtn) helpBtn.title = 'Show keyboard shortcuts [?]';
             this.refreshHelpOverlay();
         } catch (error) {
             console.error('Error updating shortcut hints:', error);
@@ -730,14 +685,18 @@ class VideoSpeedController {
                 this.positionControlsInsideVideo(activeVideo);
                 this.setupVideoMouseListeners(activeVideo);
                 this.ensureYouTubePreferencesLink(activeVideo.closest('.html5-video-player'));
-                this.hideControls();
+                if (this.isMouseOverVideo || this.isMouseOverControls) {
+                    this.showControls();
+                }
             } else if (this.youtubeEmbedController && this.youtubeEmbedController.hasEmbeds()) {
                 // No direct video, but YouTube embeds exist — position controls over embed
                 const iframe = this.youtubeEmbedController.getActiveIframe();
                 if (iframe) {
                     this.positionControlsInsideIframe(iframe);
                     this.setupIframeMouseListeners(iframe);
-                    this.hideControls();
+                    if (this.isMouseOverVideo || this.isMouseOverControls) {
+                        this.showControls();
+                    }
                 } else {
                     this.teardownYouTubeChromeObserver();
                     this.controls.style.display = 'none';
@@ -786,16 +745,23 @@ class VideoSpeedController {
 
     setupIframeMouseListeners(iframe) {
         try {
-            if (!iframe || iframe._vscMouseListenersAdded) return;
+            if (!iframe || iframe._vscMouseListenersAdded) {
+                if (iframe?._vscMouseListenersAdded && iframe.matches(':hover')) {
+                    this.isMouseOverVideo = true;
+                    this.showControls();
+                }
+                return;
+            }
 
             const mouseEnterHandler = () => {
                 this.isMouseOverVideo = true;
+                this.cancelScheduledHideControls();
                 this.showControls();
             };
 
             const mouseLeaveHandler = () => {
                 this.isMouseOverVideo = false;
-                this.hideControls();
+                this.scheduleHideControlsAfterLeave();
             };
 
             let mouseMoveTimeout = null;
@@ -807,7 +773,7 @@ class VideoSpeedController {
                     mouseMoveTimeout = null;
                 }, 100);
 
-                this.resetControlsTimer();
+                this.showControls();
             };
 
             iframe.addEventListener('mouseenter', mouseEnterHandler);
@@ -821,6 +787,11 @@ class VideoSpeedController {
                 { element: iframe, event: 'mouseleave', handler: mouseLeaveHandler },
                 { element: iframe, event: 'mousemove', handler: mouseMoveHandler }
             );
+
+            if (iframe.matches(':hover')) {
+                this.isMouseOverVideo = true;
+                this.showControls();
+            }
         } catch (error) {
             console.error('Error setting up iframe mouse listeners:', error);
         }
@@ -848,6 +819,8 @@ class VideoSpeedController {
 
             const existing = player.querySelector('.vsc-preferences-link');
             if (existing) {
+                existing.textContent = 'Speed preferences';
+                existing.setAttribute('aria-label', 'Speed preferences');
                 this.syncPreferencesButton();
                 return existing;
             }
@@ -859,8 +832,8 @@ class VideoSpeedController {
             btn.type = 'button';
             btn.className = 'ytp-button vsc-preferences-link';
             btn.title = 'Video Speed Controller preferences';
-            btn.setAttribute('aria-label', 'Preferences');
-            btn.textContent = 'Preferences';
+            btn.setAttribute('aria-label', 'Speed preferences');
+            btn.textContent = 'Speed preferences';
             btn.addEventListener('click', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -920,20 +893,25 @@ class VideoSpeedController {
             const surface = video.closest('.html5-video-player') || video;
             if (surface._vscMouseListenersAdded) {
                 this.setupYouTubeChromeObserver(surface);
+                if (surface.matches(':hover')) {
+                    this.isMouseOverVideo = true;
+                    this.showControls();
+                }
                 return;
             }
 
             const mouseEnterHandler = () => {
                 this.isMouseOverVideo = true;
+                this.cancelScheduledHideControls();
                 this.showControls();
             };
 
             const mouseLeaveHandler = () => {
                 this.isMouseOverVideo = false;
-                this.hideControls();
+                this.scheduleHideControlsAfterLeave();
             };
 
-            // Debounced mouse move - only reset hide timer, don't re-show if already visible
+            // Debounced mouse move — keep showing while the pointer is over the video
             let mouseMoveTimeout = null;
             const mouseMoveHandler = () => {
                 if (!this.isMouseOverVideo) return;
@@ -945,8 +923,7 @@ class VideoSpeedController {
                     mouseMoveTimeout = null;
                 }, 100);
 
-                // Just reset the hide timer if controls are already visible
-                this.resetControlsTimer();
+                this.showControls();
             };
 
             surface.addEventListener('mouseenter', mouseEnterHandler);
@@ -963,6 +940,7 @@ class VideoSpeedController {
 
             if (surface.matches(':hover')) {
                 this.isMouseOverVideo = true;
+                this.showControls();
             }
 
             this.setupYouTubeChromeObserver(surface);
@@ -976,6 +954,14 @@ class VideoSpeedController {
             const hasEmbed = this.youtubeEmbedController && this.youtubeEmbedController.hasEmbeds();
             if (!this.controls || (!this.currentVideo && !hasEmbed)) return;
 
+            this.syncPreferencesButton();
+            const settingsBtn = this.controls.querySelector('.settings');
+            if (settingsBtn?.hidden) {
+                this.controls.style.opacity = '0';
+                this.controls.style.pointerEvents = 'none';
+                return;
+            }
+
             // Only update DOM if not already visible
             const isVisible = this.controls.style.opacity === '1';
             if (!isVisible) {
@@ -984,9 +970,7 @@ class VideoSpeedController {
                 this.controls.style.pointerEvents = 'auto';
             }
 
-            // Reset the hide timer
             this.resetControlsTimer();
-            this.syncPreferencesButton();
         } catch (error) {
             console.error('Error showing controls:', error);
         }
@@ -994,8 +978,8 @@ class VideoSpeedController {
 
     resetControlsTimer() {
         try {
-            // Don't set hide timeout if pointer is over video - keep controls visible
-            if (this.isMouseOverVideo) return;
+            // Don't set hide timeout if pointer is over video or overlay bar
+            if (this.isMouseOverVideo || this.isMouseOverControls) return;
 
             // Clear any existing hide timeout
             if (this.controlsTimeout) {
@@ -1015,13 +999,30 @@ class VideoSpeedController {
         }
     }
 
+    cancelScheduledHideControls() {
+        if (this.hideAfterLeaveTimeout) {
+            clearTimeout(this.hideAfterLeaveTimeout);
+            this.hideAfterLeaveTimeout = null;
+        }
+    }
+
+    scheduleHideControlsAfterLeave() {
+        this.cancelScheduledHideControls();
+        this.hideAfterLeaveTimeout = setTimeout(() => {
+            this.hideAfterLeaveTimeout = null;
+            if (!this.isMouseOverVideo && !this.isMouseOverControls) {
+                this.hideControls();
+            }
+        }, 50);
+        this.timeouts.push(this.hideAfterLeaveTimeout);
+    }
+
     hideControls() {
         try {
             if (!this.controls) return;
 
-            // Don't hide if mouse is over controls
-            if (this.isMouseOverControls) {
-                this.resetControlsTimer();
+            // Stay up while the pointer is over the video or the overlay bar
+            if (this.isMouseOverVideo || this.isMouseOverControls) {
                 return;
             }
 
@@ -1386,71 +1387,6 @@ class VideoSpeedController {
                 const button = this.controls?.querySelector(selector);
                 return isValidElement(button) ? button : null;
             };
-            
-            const speedDownBtn = getButton('.speed-down');
-            const speedUpBtn = getButton('.speed-up');
-            const resetBtn = getButton('.speed-reset');
-            
-            if (speedDownBtn) {
-                const speedDownHandler = () => {
-                    try {
-                        const video = getCurrentVideo();
-                        if (video) {
-                            this.changeSpeed(video, -1);
-                        } else if (this.youtubeEmbedController.hasEmbeds()) {
-                            this.changeEmbedSpeed(-1);
-                        }
-                    } catch (clickError) {
-                        console.error('Error in speed down click handler:', clickError);
-                    }
-                };
-                addSafeListener(speedDownBtn, 'click', speedDownHandler);
-            }
-
-            if (speedUpBtn) {
-                const speedUpHandler = () => {
-                    try {
-                        const video = getCurrentVideo();
-                        if (video) {
-                            this.changeSpeed(video, 1);
-                        } else if (this.youtubeEmbedController.hasEmbeds()) {
-                            this.changeEmbedSpeed(1);
-                        }
-                    } catch (clickError) {
-                        console.error('Error in speed up click handler:', clickError);
-                    }
-                };
-                addSafeListener(speedUpBtn, 'click', speedUpHandler);
-            }
-
-            if (resetBtn) {
-                const resetHandler = () => {
-                    try {
-                        const video = getCurrentVideo();
-                        if (video) {
-                            this.resetSpeed(video);
-                        } else if (this.youtubeEmbedController.hasEmbeds()) {
-                            this.resetEmbedSpeed();
-                        }
-                    } catch (clickError) {
-                        console.error('Error in reset click handler:', clickError);
-                    }
-                };
-                addSafeListener(resetBtn, 'click', resetHandler);
-            }
-
-            const skipSilenceBtn = getButton('.skip-silence');
-            if (skipSilenceBtn) {
-                const skipSilenceHandler = () => {
-                    try {
-                        const video = getCurrentVideo();
-                        if (video) this.toggleSkipSilence(video);
-                    } catch (clickError) {
-                        console.error('Error in skip silence click handler:', clickError);
-                    }
-                };
-                addSafeListener(skipSilenceBtn, 'click', skipSilenceHandler);
-            }
 
             const settingsBtn = getButton('.settings');
             if (settingsBtn) {
@@ -1460,18 +1396,9 @@ class VideoSpeedController {
                 addSafeListener(settingsBtn, 'click', settingsHandler);
             }
 
-            const helpBtn = getButton('.help');
-            if (helpBtn) {
-                addSafeListener(helpBtn, 'click', (event) => {
-                    event.stopPropagation();
-                    this.toggleHelpOverlay();
-                });
-            }
-
             const documentClickHandler = (event) => {
                 if (!this.helpOverlayVisible || !this.helpOverlay) return;
                 if (this.helpOverlay.contains(event.target)) return;
-                if (helpBtn && helpBtn.contains(event.target)) return;
                 this.hideHelpOverlay();
             };
             addSafeListener(document, 'click', documentClickHandler);
@@ -1801,6 +1728,10 @@ class VideoSpeedController {
         if (this.controlsTimeout) {
             clearTimeout(this.controlsTimeout);
             this.controlsTimeout = null;
+        }
+        if (this.hideAfterLeaveTimeout) {
+            clearTimeout(this.hideAfterLeaveTimeout);
+            this.hideAfterLeaveTimeout = null;
         }
         
         // Clear all tracked timeouts

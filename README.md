@@ -1,6 +1,6 @@
 # Video Speed Controller
 
-Chrome extension that lets you control HTML5 video playback speed on any website with customisable keyboard shortcuts and on-screen controls.
+Chrome extension that lets you control HTML5 video playback speed on any website with customisable keyboard shortcuts and a Speed preferences link.
 
 ## Defaults
 
@@ -10,7 +10,7 @@ Chrome extension that lets you control HTML5 video playback speed on any website
 | **A** | Slow down |
 | **S** | Reset / toggle normal speed |
 
-Change speeds and shortcuts from the extension popup (or **Preferences** on the video controls).
+Change speeds and shortcuts from the extension popup (or **Speed preferences** on the video).
 
 ## Load unpacked (local)
 
@@ -32,3 +32,7 @@ Open [`publish/index.html`](publish/index.html) in a browser — checklist, copy
 - [`_docs/spec.md`](_docs/spec.md) — how it should work  
 - [`_docs/design.md`](_docs/design.md) — how it should look  
 - [`privacy-policy.html`](privacy-policy.html) — for store hosting  
+
+## Feedback
+
+Send it at [dannyhope.co.uk/feedback](https://dannyhope.co.uk/feedback).
