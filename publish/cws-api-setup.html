@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chrome Web Store API — Video Speed Controller</title>
+  <link rel="stylesheet" href="operator.css">
+  <style>
+    header {
+      background: transparent;
+      border: 0;
+      padding: 1.5rem 1.25rem 0.75rem;
+    }
+    header .inner, main {
+      max-width: 54rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1 {
+      font-size: 1.35rem;
+      margin: 0;
+      line-height: 1.3;
+      color: var(--text);
+      font-weight: 600;
+    }
+    main {
+      max-width: calc(54rem + 2.5rem);
+      padding: 0 1.25rem 2rem;
+      margin: 1rem auto 2rem;
+    }
+    .panel {
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      padding: 1.5rem 1.5rem 1.75rem;
+      margin: 0 0 1rem;
+    }
+    .panel > h2 {
+      margin: 0 0 1rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .status-card .label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0 0 0.35rem;
+      color: var(--status-mixed);
+    }
+    .status-card p { margin: 0; color: var(--muted); }
+    .where {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin: 0 0 0.65rem;
+    }
+    .where a { color: var(--accent); }
+    .step-head {
+      display: grid;
+      grid-template-columns: var(--tick-col, 1.25rem) minmax(0, 1fr);
+      column-gap: var(--tick-gap, 0.65rem);
+      align-items: start;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+    }
+    .step-head h3 {
+      margin: 0;
+      grid-column: 2;
+      font-size: 1rem;
+      color: var(--text);
+    }
+    .step-head > .done-toggle { grid-column: 1; }
+    .done-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--tick-col, 1.25rem);
+      flex-shrink: 0;
+      margin-top: 0.15rem;
+      cursor: pointer;
+      user-select: none;
+      padding: 0;
+      border: none;
+      background: transparent;
+    }
+    .done-toggle input {
+      width: 1.125rem;
+      height: 1.125rem;
+      margin: 0;
+      accent-color: var(--done);
+      cursor: pointer;
+    }
+    .step.is-done {
+      margin-top: 0.35rem;
+      padding-top: 0.15rem;
+      padding-bottom: 0.15rem;
+    }
+    .step.is-done > :not(.step-head) { display: none; }
+    .step.is-done .step-head { margin-bottom: 0; align-items: center; }
+    .step.is-done .step-head h3 {
+      color: var(--muted);
+      font-weight: 400;
+      text-decoration: line-through;
+    }
+    .step.substep {
+      --tick-col: 1.25rem;
+      --tick-gap: 0.65rem;
+      margin-top: 1.1rem;
+      padding-top: 0;
+    }
+    .step.substep:first-of-type { margin-top: 0; }
+    .step.substep > :not(.step-head) {
+      margin-left: calc(var(--tick-col) + var(--tick-gap));
+    }
+    p, li { color: var(--muted); }
+    p.form-hint {
+      font-size: 0.85rem;
+      margin: 0 0 0.75rem;
+      color: var(--muted);
+    }
+    a { color: var(--accent); }
+    code {
+      font-size: 0.85em;
+      background: var(--code);
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+    }
+    .copy-wrap {
+      position: relative;
+      background: var(--code);
+      border-radius: 8px;
+      margin: 0 0 0.75rem;
+    }
+    pre.copy-block {
+      margin: 0;
+      padding: 0.85rem 2.5rem 0.85rem 1rem;
+      background: transparent;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.85rem;
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      line-height: 1.45;
+    }
+    .copy-actions {
+      position: absolute;
+      top: 0.45rem;
+      right: 0.45rem;
+      display: flex;
+      gap: 0.2rem;
+    }
+    .copy-actions > button.copy {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.85rem;
+      height: 1.85rem;
+      padding: 0;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: color-mix(in srgb, var(--card) 72%, transparent);
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .copy-actions > button.copy:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--card);
+    }
+    .copy-actions > button.copy.copied {
+      background: var(--status-public-bg);
+      border-color: var(--done);
+      color: var(--done);
+    }
+    .copy-actions > button.copy.copied svg { display: none; }
+    .copy-actions > button.copy.copied::after {
+      content: "✓";
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .toast {
+      position: fixed;
+      bottom: 1.25rem;
+      right: 1.25rem;
+      background: var(--color-cool-grey-90);
+      color: #fff;
+      padding: 0.65rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 100;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="inner">
+      <h1>Chrome Web Store API — Video Speed Controller</h1>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel status-card" id="status">
+      <p class="label">Blocked — credentials needed</p>
+      <p>The upload zip was rebuilt today (<code>publish/video-speed-controller.zip</code>, manifest <code>1.0</code>). The agent cannot call the Web Store API until the five environment variables below are set in your shell. If this extension is not in the dashboard yet, complete the first listing in <a href="index.html">publish/index.html</a> before using the API.</p>
+    </section>
+
+    <section class="panel" id="prerequisite">
+      <h2>Before the API</h2>
+
+      <div class="step substep" data-step="dashboard-item">
+        <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
+          <h3>Extension item exists in the Developer Dashboard</h3>
+        </div>
+        <p class="where">The API updates an <strong>existing</strong> item only. First time: <a href="index.html">publish/index.html</a> → Developer Dashboard → <strong>New item</strong>, or upload once manually. After that, copy the 32-character extension ID from the item URL or Build → Package.</p>
+        <p class="form-hint">Already listed? Tick this and continue. Not listed yet? Do the store helper first, then return here for future updates.</p>
+      </div>
+    </section>
+
+    <section class="panel" id="google-cloud">
+      <h2>Google Cloud &amp; OAuth (one-time)</h2>
+
+      <div class="step substep" data-step="enable-api">
+        <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
+          <h3>Enable Chrome Web Store API</h3>
+        </div>
+        <p class="where"><a href="https://console.cloud.google.com/apis/library/chromewebstore.googleapis.com" target="_blank" rel="noopener">Google Cloud Console → Chrome Web Store API</a> — pick or create a project, then Enable.</p>
+      </div>
+
+      <div class="step substep" data-step="oauth-consent">
+        <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
+          <h3>Configure OAuth consent screen</h3>
+        </div>
+        <p class="where"><a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" rel="noopener">OAuth consent screen</a> — External, app name + support email, add yourself as a <strong>Test user</strong>. Your Google Account needs <strong>2-step verification</strong> to publish extensions.</p>
+      </div>
+
+      <div class="step substep" data-step="oauth-client">
+        <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
+          <h3>Create OAuth client (Web application)</h3>
+        </div>
+        <p class="where"><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Credentials → Create credentials → OAuth client ID</a> — type <strong>Web application</strong>. Authorised redirect URI: <code>https://developers.google.com/oauthplayground</code>. Save the client ID and client secret.</p>
+      </div>
+
+      <div class="step substep" data-step="refresh-token">
+        <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
+          <h3>Generate refresh token</h3>
+        </div>
+        <p class="where"><a href="https://developers.google.com/oauthplayground" target="_blank" rel="noopener">OAuth 2.0 Playground</a> — gear icon → <strong>Use your own OAuth credentials</strong> → paste client ID and secret. Input scope: <code>https://www.googleapis.com/auth/chromewebstore</code> → Authorise → Exchange authorization code for tokens → copy the <strong>refresh token</strong>.</p>
+        <p class="form-hint">Step-by-step: <a href="https://github.com/fregante/chrome-webstore-upload-keys" target="_blank" rel="noopener">chrome-webstore-upload-keys</a> · Official: <a href="https://developer.chrome.com/docs/webstore/using-api" target="_blank" rel="noopener">Use the Chrome Web Store API</a></p>
+      </div>
+    </section>
+
+    <section class="panel" id="ids">
+      <h2>Publisher &amp; extension IDs</h2>
+
+      <div class="step substep" data-step="publisher-id">
+        <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
+          <h3>Copy publisher ID</h3>
+        </div>
+        <p class="where"><a href="https://chrome.google.com/webstore/devconsole" target="_blank" rel="noopener">Developer Dashboard</a> → <strong>Publisher → Settings</strong> (also visible in the dashboard URL).</p>
+      </div>
+
+      <div class="step substep" data-step="extension-id">
+        <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
+          <h3>Copy extension ID</h3>
+        </div>
+        <p class="where"><a href="https://chrome.google.com/webstore/devconsole" target="_blank" rel="noopener">Developer Dashboard</a> → your item → the 32-character ID in the URL or under <strong>Build → Package</strong>.</p>
+      </div>
+    </section>
+
+    <section class="panel" id="env">
+      <h2>Export for the agent</h2>
+
+      <div class="step substep" data-step="export-env" data-copy>
+        <div class="step-head">
+          <label class="done-toggle"><input type="checkbox" data-done aria-label="Done"></label>
+          <h3>Set the five environment variables</h3>
+        </div>
+        <p class="where">Terminal or shell profile — paste real values, then tell Cursor to publish again. Do not commit these to the repo.</p>
+        <div class="copy-wrap">
+          <pre class="copy-block">export CLIENT_ID="your-client-id.apps.googleusercontent.com"
+export CLIENT_SECRET="your-client-secret"
+export REFRESH_TOKEN="your-refresh-token"
+export PUBLISHER_ID="your-publisher-id"
+export EXTENSION_ID="your-32-char-extension-id"</pre>
+          <div class="copy-actions">
+            <button type="button" class="copy" aria-label="Copy" title="Copy"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          </div>
+        </div>
+        <p class="form-hint">After export, say “publish the update” in Cursor. The agent will upload <code>publish/video-speed-controller.zip</code> and submit for review (<code>DEFAULT_PUBLISH</code>).</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    const STORAGE_KEY = 'video-speed-controller-cws-api-done-v1';
+
+    function loadDone() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw !== null) return JSON.parse(raw);
+      } catch { /* empty */ }
+      return {};
+    }
+
+    function saveDone(map) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+    }
+
+    function applyDoneState() {
+      const map = loadDone();
+      document.querySelectorAll('.step[data-step]').forEach((step) => {
+        const checked = !!map[step.dataset.step];
+        step.classList.toggle('is-done', checked);
+        const own = step.querySelector('.step-head input[data-done]');
+        if (own) own.checked = checked;
+      });
+    }
+
+    document.querySelectorAll('.step[data-step]').forEach((step) => {
+      const input = step.querySelector('.step-head input[data-done]');
+      if (!input) return;
+      input.addEventListener('change', () => {
+        const map = loadDone();
+        if (input.checked) map[step.dataset.step] = true;
+        else delete map[step.dataset.step];
+        saveDone(map);
+        step.classList.toggle('is-done', input.checked);
+      });
+      const head = step.querySelector('.step-head');
+      if (!head) return;
+      head.addEventListener('click', (e) => {
+        if (e.target.closest('input[data-done], a, button')) return;
+        e.preventDefault();
+        input.checked = !input.checked;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    });
+
+    applyDoneState();
+
+    function showToast(message) {
+      const el = document.getElementById('toast');
+      if (!el) return;
+      el.textContent = message;
+      el.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove('show'), 1600);
+    }
+
+    document.querySelectorAll('[data-copy]').forEach((field) => {
+      const block = field.querySelector('.copy-block');
+      const btn = field.querySelector('button.copy');
+      if (!btn || !block) return;
+      btn.addEventListener('click', async () => {
+        const text = block.textContent;
+        if (!text.trim()) {
+          showToast('Nothing to copy');
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.classList.add('copied');
+          showToast('Copied to clipboard');
+          setTimeout(() => btn.classList.remove('copied'), 1500);
+        } catch {
+          showToast('Copy failed — select the text manually');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
