@@ -15,7 +15,7 @@
 <body>
   <div class="page">
     <h1>Dannify status — Video Speed Controller</h1>
-    <p class="meta">Living audit. Regenerated whenever <code>/dannify</code> runs. Last updated: 2026-08-25.</p>
+    <p class="meta">Living audit. Regenerated whenever <code>/dannify</code> runs. Last updated: 2026-08-28.</p>
     <p class="hint">What still needs doing, then what’s already up to spec. Product truth is <code>_docs/spec.md</code> and <code>_docs/design.md</code>. Current KPI is <code>_docs/now.md</code>.</p>
 
     <section class="panel">
@@ -23,16 +23,17 @@
       <h3>Must</h3>
       <ul>
         <li>Add popup/options <strong>live preview</strong>: a <code>dev</code> script that opens the settings UI in a normal browser tab with a <code>chrome.*</code> shim and reload-on-save (do not rely on <code>chrome://extensions</code> → Reload for HTML/CSS/JS UI work)</li>
+        <li>Add <code>scripts/ensure-local-domain.sh</code> and map <code>video-speed-controller.test</code> to loopback in macOS <code>/etc/hosts</code>; wire the check into local development when a start command exists</li>
       </ul>
       <h3>Should</h3>
       <ul>
         <li>Add <code>_docs/now.md</code> with the current KPI (ask Danny; do not invent)</li>
         <li>Create <code>_vibing/</code> and add <code>_vibing/</code> to <code>.gitignore</code> (<code>.DS_Store</code> already ignored)</li>
-        <li>Add a user-facing feedback link to <a href="https://dannyhope.co.uk/feedback">https://dannyhope.co.uk/feedback</a> (README and/or popup)</li>
+        <li>None — feedback link is already present in README, popup, and privacy policy</li>
         <li>State an accessibility level in <code>_docs/spec.md</code> (honest “none / no thought given” is fine)</li>
         <li>Add this repo to <code>Bombay/projects.json</code></li>
         <li>Add usability-test scaffold (<code>_docs/usability-tasks.json</code> + <code>usability-test.html</code>)</li>
-        <li>Fix attribution colour in <code>popup.css</code>: use Cool Grey 60 (<code>#616E73</code>), not <code>#7B858A</code></li>
+        <li>Fix attribution colour in <code>popup.css</code>: use Cool Grey 60 (<code>#616E73</code>), not Cool Grey 50 (<code>#7B858A</code>)</li>
         <li>Restyle <code>publish/index.html</code> with sibling <code>operator.css</code>; remove the invented <code>:root</code> palette</li>
         <li>Align <code>popup.css</code> hex colours with brand.md (replace invented blues/reds such as <code>#0066cc</code>, <code>#D32F2F</code>)</li>
       </ul>
@@ -52,6 +53,7 @@
         <li>Load-unpacked steps in README (via <code>dist/</code> / <code>pack:unpacked</code>)</li>
         <li><code>publish/index.html</code> pack exists</li>
         <li>Attribution “A Danny Hope product” → <code>https://dannyhope.co.uk</code> in popup footer</li>
+        <li>Feedback link → <code>https://dannyhope.co.uk/feedback</code> in README, popup, and privacy policy</li>
         <li>Toolbar icons are mid-grey glyph on transparent RGBA (no square tile)</li>
         <li><code>.in/</code> inbox exists</li>
         <li><code>video-speed-controller.code-workspace</code> exists</li>
@@ -60,6 +62,7 @@
         <li>No theme picker / appearance toggle in product UI</li>
         <li>Public store/privacy URLs use dannyhope.co.uk hops (not raw Chrome Web Store in product docs)</li>
         <li>Stack kept as vanilla MV3 (no Plasmo migration listed)</li>
+        <li><code>_docs/operator.css</code> uses the canonical operator stylesheet</li>
       </ul>
     </section>
   </div>
