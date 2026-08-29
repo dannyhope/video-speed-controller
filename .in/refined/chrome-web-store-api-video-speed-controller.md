@@ -1,4 +1,5 @@
 # Chrome Web Store API — Video Speed Controller
-**Readiness:** wip
+**Readiness:** refined
 **Roadmap:** now
 **Helper:** publish/cws-api-setup.html
+**Type:** manual
