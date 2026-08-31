@@ -16,6 +16,8 @@ Change speeds and shortcuts from the extension popup (or **Speed preferences** o
 
 Do **not** load this repo folder. Chrome rejects `_docs` (names starting with `_` are reserved).
 
+The preferred local hostname is recorded in [`.local-domain`](.local-domain) as `video-speed-controller.local`. The helper script can add it to macOS loopback hosts when needed.
+
 1. `npm run pack:unpacked` — writes a Chrome-safe copy to `dist/`
 2. Open `chrome://extensions/`
 3. Enable **Developer mode**
