@@ -10,6 +10,11 @@
 
 Quiet utility chrome that sits on top of video players without looking like a product landing page. Dark translucent panels, white type, system fonts — readable over any video.
 
+## Local development
+
+- The browser-facing development URL is `http://video-speed-controller.local/`, provided by Bombay’s shared port-80 proxy.
+- The project server listens only on loopback at the preferred port `5237`; development files use the repository’s normal static reload workflow.
+
 ---
 
 ## On-page overlay

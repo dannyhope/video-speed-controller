@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "Chrome extension for controlling video playback speed",
   "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "check:local-domain": "bash scripts/ensure-local-domain.sh",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "node tests/e2e/run-tests.js",

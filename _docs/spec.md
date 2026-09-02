@@ -26,7 +26,7 @@ Video Speed Controller is a Chrome extension that lets people change HTML5 video
 ### Local development address
 
 - The preferred local hostname is `video-speed-controller.local`, recorded in the root `.local-domain` file.
-- `scripts/ensure-local-domain.sh` maintains its `127.0.0.1` mapping on macOS when local serving is introduced.
+- `npm run dev` serves the repository from `127.0.0.1:5237` using Python’s static server and checks the hostname first. Bombay’s shared port-80 proxy routes `video-speed-controller.local` to port `5237`; no project-local proxy is created.
 
 ### Speed control
 

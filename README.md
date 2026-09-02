@@ -16,7 +16,9 @@ Change speeds and shortcuts from the extension popup (or **Speed preferences** o
 
 Do **not** load this repo folder. Chrome rejects `_docs` (names starting with `_` are reserved).
 
-The preferred local hostname is recorded in [`.local-domain`](.local-domain) as `video-speed-controller.local`. The helper script can add it to macOS loopback hosts when needed.
+The preferred local hostname is recorded in [`.local-domain`](.local-domain) as `video-speed-controller.local`. The preferred development port is recorded in [`.dev-port`](.dev-port) as `5237`. Run `npm run dev` to serve the repository on `127.0.0.1:5237`; the command checks the hostname first and supports normal browser live reload when the page is open through Bombay’s shared port-80 proxy.
+
+Bombay route required: `video-speed-controller.local` → `127.0.0.1:5237`.
 
 1. `npm run pack:unpacked` — writes a Chrome-safe copy to `dist/`
 2. Open `chrome://extensions/`
