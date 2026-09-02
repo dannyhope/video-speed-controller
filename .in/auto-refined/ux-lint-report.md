@@ -209,8 +209,8 @@ None identified. The extension's core functionality is usable.
 - Docs impact: none
 
 ### Questions for refinement
-1. Should tasks be created for the 3 uncovered minor issues (× abbreviation, autosave feedback, Title Case headings)?
-2. Once resolved, this report file should move to `.in/built/` — agree?
+1. Should we create small follow-up tasks for these three remaining polish items: explain the remove button, make save messages clearer, and change section headings to sentence case?
+2. This file is a report, not a feature to build. Once its follow-up tasks are decided, should I move it to `.in/built/`?
 
 ### Documentation impact
 - _(none — this is a report, not a code change)_

@@ -23,11 +23,11 @@ Video Speed Controller: YouTube assigns its own speed-up/slow down functionality
 **Estimated complexity:** Small (config change or minor code addition)
 
 ### Questions for refinement
-1. Should < and > **replace** the current shortcuts (d/a) or be **additional** shortcuts?
-2. Should this be YouTube-specific, or apply to all sites?
-3. Should the extension prevent the native behaviour (`e.preventDefault()`), or let both handlers run?
-4. Should this be a default setting, or something users configure themselves?
-5. What about the comma and period keys WITHOUT shift - should those also be acquired?
+1. Should `<` and `>` replace the current `a` and `d` shortcuts, or work in addition to them?
+2. Should these keys work only on YouTube, or on every website with a video?
+3. When someone presses one of these keys on YouTube, should the extension take over completely, or should YouTube also respond?
+4. Should these keys be enabled for everyone by default, or should each person turn them on in settings?
+5. Should the unshifted comma and full-stop keys also control speed, or only `<` and `>`?
 
 ### Dependencies
 None. Independent task.

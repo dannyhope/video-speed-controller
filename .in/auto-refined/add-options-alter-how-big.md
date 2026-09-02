@@ -55,11 +55,11 @@ This assumes the extension has keyboard shortcuts for seeking backward/forward u
 **Estimated complexity:** Medium (new feature category, not just config change)
 
 ### Questions for refinement
-1. **Is this feature actually wanted?** The extension is focused on SPEED control, not seeking/scrubbing. Adding seeking would expand the scope significantly.
-2. **Which keys should be used?** j/l conflict with typing in comment boxes. Arrow keys might conflict with native controls on some sites.
-3. **What's the default seek interval?** YouTube uses 5s for arrows, 10s for j/l.
-4. **Should this respect the site's native seeking, or override it?** (e.g., YouTube already handles arrow keys)
-5. **Should the extension also handle Shift+Left/Right for frame-by-frame seeking?**
+1. **Do we want this feature at all?** This extension currently changes playback speed, not the video’s position. Adding seeking would make it a broader video-control tool.
+2. **Which keys should move through the video?** `J` and `L`, the arrow keys, or user-chosen keys? `J` and `L` may type into comment boxes, while arrow keys may already control the player.
+3. **How many seconds should each press move?** YouTube uses 5 seconds for arrow keys and 10 seconds for `J`/`L`. Should we use one default, or let people choose?
+4. **Should the extension replace the website’s own seeking?** For example, on YouTube, should the extension change the existing arrow-key behaviour or leave it alone?
+5. **Do we also need frame-by-frame movement?** For example, should Shift + Left/Right move one video frame at a time?
 
 ### Dependencies
 None. Independent feature request.

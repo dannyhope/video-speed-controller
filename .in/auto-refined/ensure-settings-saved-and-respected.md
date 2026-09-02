@@ -28,11 +28,11 @@ Make sure video speed controller settings get saved and are respected when chang
 **Estimated complexity:** Small (likely a bug fix or verification task)
 
 ### Questions for refinement
-1. **What's the specific symptom?** Settings not saving at all, or settings saved but not applied to current page?
-2. **Which settings specifically?** Custom speeds, shortcuts, or feature toggles?
-3. **Timing issue?** Does it work after page reload, but not immediately after changing settings?
-4. **Does this happen on all sites, or specific ones?** (e.g., YouTube might have special behaviour)
-5. **Browser version?** Could be related to chrome.storage.sync sync delays or quota issues
+1. **What goes wrong?** Are changes not saved, or are they saved but not used on the page that is already open?
+2. **Which settings are affected?** The speed list, keyboard shortcuts, or on/off options?
+3. **When does it fail?** Does the change work after reloading the page, but not immediately?
+4. **Where does it fail?** On every website, or only on a particular site such as YouTube?
+5. **Which Chrome version is being used?** This may help us check whether the problem is specific to Chrome’s settings sync.
 
 ### Dependencies
 None identified, but may relate to other storage-dependent features.

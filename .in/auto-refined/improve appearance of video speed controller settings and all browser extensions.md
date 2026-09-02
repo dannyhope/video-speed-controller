@@ -89,28 +89,14 @@ The phrase "and all browser extensions" in the filename is ambiguous. Possible m
 
 ### Questions for refinement
 
-1. **Scope clarification:** Does "and all browser extensions" mean:
-   - Apply this design to other browser extensions you maintain?
-   - Or just "make all settings sections in this extension look good"?
-2. **Design fidelity:** Should we match Simplify Gmail's style closely, or use it as loose inspiration?
-3. **Priority elements:** Which visual changes are most important?
-   - Toggle switches instead of checkboxes
-   - Icons for visual recognition
-   - Card-based layout
-   - Increased spacing
-   - All of the above
-4. **Accessibility:** Toggle switches can be less accessible than checkboxes if not implemented carefully. Should we use:
-   - CSS-only toggle switches with hidden checkboxes (maintains form semantics)
-   - Or custom JS toggle components with ARIA attributes?
-5. **Extension width:** Current popup is 380px wide. Should the redesign:
-   - Keep the current compact width
-   - Expand to accommodate more generous spacing
-6. **Icons:** Should we:
-   - Use emoji icons (simple, no assets needed)
-   - Create custom SVG icons
-   - Use an icon library (e.g., Feather Icons, Heroicons)
-7. **Expandable sections:** The reference has chevron (›) indicators. Should any settings sections be collapsible to reduce visual clutter?
-8. **Related task:** The file `improve appearance of speed controller settings.md` in `auto-refined/` (from Feb 9) is marked "Dropped: 2026-02-05". Is this task superseding that one, or are they separate?
+1. **What is the scope?** Should this redesign apply only to this extension, or to your other browser extensions as well?
+2. **How closely should it follow the screenshot?** Should it look similar to Simplify Gmail, or should the screenshot only provide general inspiration?
+3. **Which changes matter most?** Choose any: toggle switches, icons, grouped cards, or more spacing.
+4. **How should toggles work for accessibility?** Should we keep real checkboxes underneath the visual switch so keyboard and screen-reader users can still use them?
+5. **How wide should the settings panel be?** Keep it at 380px, or make it wider to allow more space?
+6. **What style of icons should we use?** Emoji, custom SVG icons, or an icon library?
+7. **Should settings sections collapse?** Collapsible sections can reduce clutter, but they hide options until opened.
+8. **What should happen to the older appearance task?** Should this replace it, or should both tasks remain separate?
 
 ### Dependencies
 

@@ -24,12 +24,12 @@ Holding down option should step through speeds in-between those defined in setti
 **Estimated complexity:** Medium (requires new speed interpolation logic for Option key)
 
 ### Questions for refinement
-1. **Option key - intermediate speeds:** Should intermediate speeds be generated at fixed intervals (e.g., 0.1x steps), or calculated as midpoints between array values?
-2. **Option key - how many steps?** If user has speeds [1, 2], should Option create [1, 1.25, 1.5, 1.75, 2] (4 intermediates) or [1, 1.5, 2] (1 intermediate)?
-3. **Shift key - skip pattern:** Skip every other speed (step by 2), or skip a fixed number (e.g., skip 3 speeds per press)?
-4. **Combined modifiers:** What happens if user holds BOTH Option and Shift?
-5. **Long press conflict:** Reset key already uses long press for speed inversion. Should Option/Shift work during long press?
-6. **Platform differences:** Option key (Mac) vs Alt key (Windows/Linux) - are these equivalent for this feature?
+1. **What should Option do between two saved speeds?** Add regular steps such as 0.1×, or use the halfway point between them?
+2. **How many extra steps should Option add?** For saved speeds of 1× and 2×, should it offer 1.5× only, or 1.25×, 1.5× and 1.75×?
+3. **How far should Shift jump?** Skip every other saved speed, or skip a larger fixed number?
+4. **What should happen when both keys are held?** Should Option take priority, Shift take priority, or should the combination do nothing?
+5. **Should these modifiers work while holding the reset key?** Holding reset currently has a separate meaning: it reverses the speed direction.
+6. **Should this work on every computer?** Should Windows and Linux use Alt in the same way that Mac uses Option?
 
 ### Dependencies
 None. Independent task.

@@ -43,10 +43,10 @@ The extension uses hardcoded colours that don't adapt to system dark mode. On ma
 - **Docs impact**: Create `_docs/help/modes.md` documenting theme persistence behaviour (per CLAUDE.md standards)
 
 ### Questions for refinement
-1. **Theme selector UX**: `<select>` dropdown, radio buttons, or 3-way toggle? (Dropdown is simplest; radio clearer; toggle most modern)
-2. **Overlay in light mode**: Keep overlay dark-only (intentional high-contrast on video), or apply light mode to overlay too?
-3. **Sequencing**: Should this be done before or alongside the broader appearance refinement task (`.in/auto-refined/improve appearance...md`)?
-4. **Colour palette approach**: Existing palette is cool/grey-blue — dark mode needs validated contrast ratios (WCAG AA minimum)
+1. **How should people choose a theme?** Use a dropdown, radio buttons, or a three-choice switch?
+2. **Should the on-video message change colour in dark mode?** Keep its dark background for contrast over video, or make it follow the chosen theme?
+3. **When should this happen?** Do it before the broader appearance redesign, or as part of that redesign?
+4. **How should we check the colours?** The light and dark versions need enough contrast to be easy to read. Is meeting the standard contrast level for accessible text the requirement?
 
 ### Documentation impact
 - Create `_docs/help/modes.md` — document System/Light/Dark themes, persistence, keyboard shortcut (Ctrl+Shift+D per CLAUDE.md), localStorage/chrome.storage key

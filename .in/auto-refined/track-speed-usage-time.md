@@ -31,13 +31,13 @@ Keep a record of which speeds are used and for how much (real) time.
 **Estimated complexity:** Medium (new feature with UI component)
 
 ### Questions for refinement
-1. **Purpose of tracking:** Personal curiosity, research, feature prioritisation, or something else?
-2. **Granularity:** Track total aggregate time per speed, or per-video/per-site breakdowns?
-3. **Privacy:** Should data stay local only, or might it be exported/shared? (affects data structure)
-4. **UI location:** View stats in popup settings, or separate page/tab?
-5. **Data retention:** Keep data forever, or auto-purge after X days/weeks?
-6. **Idle detection:** If video is paused or user switches tabs, should that time count?
-7. **Background videos:** If video plays in background tab, should that count?
+1. **Why do we want this?** Is it mainly for your own curiosity, to help decide what to improve, or for another reason?
+2. **What should the report show?** Only the total time spent at each speed, or also which videos and websites used those speeds?
+3. **Where should the data stay?** Only on this person’s computer, or should they be able to export and share it?
+4. **Where should people see it?** Inside the existing settings panel, or on a separate page?
+5. **How long should the data be kept?** Forever, or should older records be deleted automatically?
+6. **What counts as time used?** Count only while a video is playing, or also while it is paused?
+7. **Should background playback count?** If a video keeps playing in another browser tab, should that time be included?
 
 ### Dependencies
 None. Independent feature request.
