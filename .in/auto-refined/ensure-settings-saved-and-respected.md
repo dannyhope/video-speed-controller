@@ -1,4 +1,4 @@
-Make sure video speed controller settings get saved and are respected when changing speeds.
+# Make sure video speed controller settings get saved and are respected when changing speeds.
 
 ## Auto-investigation
 **Investigated:** 2026-02-09

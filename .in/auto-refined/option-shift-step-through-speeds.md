@@ -1,4 +1,4 @@
-Holding down option should step through speeds in-between those defined in settings. Likewise holding down shift should skip speeds.
+# Holding down option should step through speeds in-between those defined in settings. Likewise holding down shift should skip speeds.
 
 ## Auto-investigation
 **Investigated:** 2026-02-09
