@@ -21,11 +21,11 @@ Change speeds and shortcuts from the extension popup (or **Speed preferences** o
 ```bash
 npm install               # Install dependencies
 npm run build:chrome      # Build for Chrome (Manifest V3)
-npm run build:firefox     # Build for Firefox (Manifest V2)
+npm run build:firefox     # Build for Firefox (Manifest V3)
 npm run build             # Build for both browsers
 ```
 
-Builds are created in `.output/chrome-mv3/` and `.output/firefox-mv2/`.
+Builds are created in `.output/chrome-mv3/` and `.output/firefox-mv3/`.
 
 ### Create Distribution Zips
 

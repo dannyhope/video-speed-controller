@@ -2,6 +2,7 @@ import { defineConfig } from 'wxt';
 
 export default defineConfig({
   extensionApi: 'chrome',
+  manifestVersion: 3,
   manifest: {
     name: 'Video Speed Controller',
     description: 'Control video playback speed with customisable keyboard shortcuts',

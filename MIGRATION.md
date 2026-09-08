@@ -66,7 +66,7 @@ Build outputs are in the `.output` directory:
 ### Manifest Versions
 
 - **Chrome**: Manifest V3 with service worker
-- **Firefox**: Manifest V2 (compatible with current Firefox)
+- **Firefox**: Manifest V3 with background scripts
 
 ### Breaking Changes
 
