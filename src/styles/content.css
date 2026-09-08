@@ -1,0 +1,117 @@
+.video-speed-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 16px;
+    z-index: 999999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.video-speed-controls {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 2px 4px;
+    border-radius: 5px;
+    z-index: 999999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.video-speed-controls button {
+    background: transparent;
+    border: none;
+    color: white;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.video-speed-controls button:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.85);
+    outline-offset: -2px;
+}
+
+.video-speed-controls button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.html5-video-player .vsc-preferences-link {
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.01em;
+}
+
+.video-speed-help {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.88);
+    color: white;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    z-index: 1000000;
+    min-width: 220px;
+    max-width: min(360px, calc(100vw - 32px));
+    display: none;
+}
+
+.video-speed-help.visible {
+    display: block;
+}
+
+.video-speed-help h2 {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.video-speed-help dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 16px;
+}
+
+.video-speed-help dt {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.video-speed-help dd {
+    margin: 0;
+    font-family: ui-monospace, "SF Mono", Monaco, monospace;
+    text-align: right;
+}
+
+.video-speed-help .help-note {
+    margin: 12px 0 0 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.65);
+}
