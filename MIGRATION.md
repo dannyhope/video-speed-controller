@@ -60,7 +60,7 @@ npm run check            # Run TypeScript type checking
 
 Build outputs are in the `.output` directory:
 - `.output/chrome-mv3/` - Chrome Manifest V3 build
-- `.output/firefox-mv2/` - Firefox Manifest V2 build
+- `.output/firefox-mv3/` - Firefox Manifest V3 build
 - `.output/*.zip` - Distribution zip files
 
 ### Manifest Versions
@@ -133,4 +133,4 @@ Existing tests remain unchanged. The migration preserves all behaviour while mod
 ## Compatibility
 
 - **Chrome**: 88+ (Manifest V3 with service worker)
-- **Firefox**: 109+ (Manifest V2, webextension-polyfill)
+- **Firefox**: 109+ (Manifest V3 with background scripts, webextension-polyfill)

@@ -47,7 +47,7 @@ npm run dev:firefox       # Start dev server for Firefox
 Then:
 1. Open `chrome://extensions/` (or `about:debugging` in Firefox)
 2. Enable **Developer mode**
-3. **Load unpacked** → select `.output/chrome-mv3/` (or `.output/firefox-mv2/`)
+3. **Load unpacked** → select `.output/chrome-mv3/` (or `.output/firefox-mv3/`)
 4. Extension auto-reloads on code changes
 
 ### Legacy Build (Deprecated)
