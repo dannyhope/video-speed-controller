@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 64 64" fill="none">
+  <!-- Mid-grey fast-forward glyph; ~12% inset; no tile -->
+  <path fill="#7B858A" d="M8 16v32l24-16L8 16zm22.5 0v32L56 32 30.5 16z"/>
+</svg>
